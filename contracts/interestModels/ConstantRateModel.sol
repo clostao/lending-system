@@ -15,7 +15,7 @@ contract ConstantRateModel is IInterestRateModel, Ownable {
     function calculateBorrowerInterestRate(
         uint256 totalSupplied,
         uint256 totalBorrowed
-    ) external view returns (uint256) {
+    ) external view override returns (uint256) {
         totalBorrowed;
         totalSupplied;
         return blockRate;

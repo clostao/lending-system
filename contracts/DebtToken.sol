@@ -76,7 +76,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
 
     // Lending system main operations
 
-    function borrow(uint256 amount) external {
+    function borrow(uint256 amount) external override {
         require(
             accumulateInterest() == Errors.NO_ERROR,
             "INTEREST_CALC_FAILED"
@@ -104,7 +104,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         underlyingAsset.transfer(msg.sender, amount);
     }
 
-    function repay(uint256 amount) external {
+    function repay(uint256 amount) external  override {
         require(
             accumulateInterest() == Errors.NO_ERROR,
             "INTEREST_CALC_FAILED"
@@ -160,7 +160,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
     /*
      * @param {uint256 amount}
      */
-    function redeem(uint256 amount) external {
+    function redeem(uint256 amount) external override {
         require(
             accumulateInterest() == Errors.NO_ERROR,
             "INTEREST_CALC_FAILED"
@@ -192,7 +192,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         address borrower,
         uint256 repayAmount,
         IDebtToken collateralToken
-    ) external {
+    ) external override {
         require(
             accumulateInterest() == Errors.NO_ERROR,
             "INTEREST_CALC_FAILED"
@@ -227,7 +227,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         address liquidator,
         uint256 amount,
         IDebtToken collateralToken
-    ) external {
+    ) external override {
         uint256 code = controller.allowSeize(
             address(this),
             borrower,
@@ -302,7 +302,8 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
 
     function getAccountSnapshot(address account)
         public
-        view
+        view 
+        override
         returns (uint256 borrowedTokens, uint256 collateralizedTokens)
     {
         return (
