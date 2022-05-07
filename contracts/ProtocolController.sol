@@ -132,7 +132,7 @@ contract ProtocolController is IProtocolController, Ownable {
         address debtToken,
         address account,
         uint256 amount
-    ) external returns (uint8) {
+    ) external override returns (uint8) {
         uint8 code = checkUserIsInMarket(debtToken, account);
         if (code != 0) {
             addUserToMarket(debtToken, account);
@@ -156,7 +156,7 @@ contract ProtocolController is IProtocolController, Ownable {
         address debtToken,
         address account,
         uint256 amount
-    ) external view returns (uint8) {
+    ) external view override returns (uint8) {
         uint8 code = checkUserIsInMarket(debtToken, account);
         if (code != 0) {
             return code;
@@ -169,10 +169,9 @@ contract ProtocolController is IProtocolController, Ownable {
         address debtToken,
         address account,
         uint256 amount
-    ) external view returns (uint8) {
-        uint8 code = checkUserIsInMarket(debtToken, account);
-        if (code != 0) {
-            return code;
+    ) external view override returns (uint8) {
+        if (!availableMarkets[debtToken].isListed) {
+            return Errors.MARKET_NOT_LISTED;
         }
 
         (bool wouldBeSolvent, ) = getExpectedLiquidity(
@@ -189,16 +188,12 @@ contract ProtocolController is IProtocolController, Ownable {
         address debtToken,
         address account,
         uint256 amount
-    ) external returns (uint8) {
-        uint8 code = checkUserIsInMarket(debtToken, account);
-        if (code != 0) {
-            addUserToMarket(debtToken, account);
-            require(
-                checkUserIsInMarket(debtToken, account) == Errors.NO_ERROR,
-                "USER_NOT_ADDED_TO_MARKET"
-            );
+    ) external view override returns (uint8) {
+        if (!availableMarkets[debtToken].isListed) {
+            return Errors.MARKET_NOT_LISTED;
         }
         amount;
+        account;
         return Errors.NO_ERROR;
     }
 
@@ -208,7 +203,7 @@ contract ProtocolController is IProtocolController, Ownable {
         address liquidator,
         uint256 amount,
         IDebtToken collateralToken
-    ) external view returns (uint8) {
+    ) external view override returns (uint8) {
         uint8 code = checkUserIsInMarket(debtToken, borrower);
         if (code != 0) {
             return code;
@@ -228,7 +223,7 @@ contract ProtocolController is IProtocolController, Ownable {
         address liquidator,
         uint256 amount,
         IDebtToken collateralToken
-    ) external view returns (uint8) {
+    ) external view override returns (uint8) {
         uint8 code = checkUserIsInMarket(debtToken, borrower);
         if (code != 0) {
             return code;

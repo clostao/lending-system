@@ -104,7 +104,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         underlyingAsset.transfer(msg.sender, amount);
     }
 
-    function repay(uint256 amount) external  override {
+    function repay(uint256 amount) external override {
         require(
             accumulateInterest() == Errors.NO_ERROR,
             "INTEREST_CALC_FAILED"
@@ -140,10 +140,10 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         );
         uint256 code = controller.allowMint(address(this), msg.sender, amount);
         require(
-            code != Errors.NO_ERROR,
+            code == Errors.NO_ERROR,
             string(
                 abi.encodePacked(
-                    "REPAY_NOT_ALLOWED: code=",
+                    "MINT_NOT_ALLOWED: code=",
                     Strings.toString(code)
                 )
             )
@@ -302,7 +302,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
 
     function getAccountSnapshot(address account)
         public
-        view 
+        view
         override
         returns (uint256 borrowedTokens, uint256 collateralizedTokens)
     {
