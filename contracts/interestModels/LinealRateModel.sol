@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "../interfaces/IInterestModel.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ConstantRateModel is IInterestRateModel, Ownable {
+contract LinealRateModel is IInterestRateModel, Ownable {
     uint256 public blockRate;
 
     constructor(uint256 _blockRate) {

@@ -9,17 +9,18 @@ async function main() {
   const pathfile = join(__dirname, "../output/contracts.json");
   const object: Tokens = JSON.parse(readFileSync(pathfile).toString());
 
-  const ERC20 = await ethers.getContractFactory("ERC20");
+  const DebtToken = await ethers.getContractFactory("DebtToken",
+    {
+      libraries: { Math: object.Math },
+    });
 
-  const debtToken = ERC20.attach(object.DebtTokenTest1);
-  const underToken = ERC20.attach(object.TokenTest1);
+  const debtToken = DebtToken.attach(object.DebtTokenTest1)
 
-  const debtBalance = await debtToken.balanceOf(signer.address)
-  const underBalance = await underToken.balanceOf(signer.address)
+  const [borrowed, collateral] = await debtToken.getAccountSnapshot(signer.address)
 
-  console.log(`Balances are:`);
-  console.log(`dTST1: ${debtBalance}`);
-  console.log(`TST1: ${underBalance}`);
+  console.log(`Signer has borrowed ${borrowed.toString()}`);
+  console.log(`Signer has supplied ${collateral.toString()}`);
+  
 }
 
 main().catch((err) => {

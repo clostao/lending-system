@@ -17,8 +17,7 @@ async function main() {
 
   const controller = ProtocolController.attach(object.ProtocolController);
 
-  console.log(await controller.availableMarkets(object.DebtTokenTest1));
-  console.log(await controller.availableMarkets(object.DebtTokenTest2));
+  console.log(await controller.marketAddresses(0));
 
   console.log("Markets have been added to controller.");
 }

@@ -6,5 +6,5 @@ interface IInterestRateModel {
     function calculateBorrowerInterestRate(
         uint256 totalSupplied,
         uint256 totalBorrowed
-    ) external view returns (uint256);
+    ) external returns (uint256);
 }

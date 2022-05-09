@@ -16,6 +16,6 @@ library ProtocolControllerStructs {
         Math.Factor exchangeRate;
         Math.Factor collateralFactor;
         IERC20 underlyingAssetAddress;
-        IDebtToken token;
+        address token;
     }
 }

@@ -7,11 +7,13 @@ import "./interfaces/IInterestModel.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 contract DebtToken is IDebtToken, ERC20, Ownable {
     struct AccountSnapshot {
         uint256 borrowedTokens;
         Math.Factor entryExchangeRate;
+        bool hasDebt;
     }
 
     IERC20 public underlyingAsset;
@@ -19,10 +21,10 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
 
     Math.Factor public liquidatorRate = Math.Factor(99, 100);
 
-    uint256 private lastInterestBlock;
+    uint256 public lastInterestBlock;
 
-    Math.Factor private exchangeRate;
-    IInterestRateModel private interestRateModel;
+    Math.Factor public exchangeRate;
+    IInterestRateModel public interestRateModel;
 
     mapping(address => AccountSnapshot) public accountSnapshot;
 
@@ -37,7 +39,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         controller = IProtocolController(_controller);
         interestRateModel = IInterestRateModel(_interestModel);
         lastInterestBlock = block.number;
-        exchangeRate = Math.Factor(10**21, 10);
+        exchangeRate = Math.Factor(10**5, 1);
     }
 
     // Configuration
@@ -87,7 +89,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             amount
         );
         require(
-            code != Errors.NO_ERROR,
+            code == Errors.NO_ERROR,
             string(
                 abi.encodePacked(
                     "BORROW_NOT_ALLOWED: code=",
@@ -97,8 +99,10 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         );
 
         // Snapshot account
-        accountSnapshot[msg.sender].borrowedTokens = amount;
+        accountSnapshot[msg.sender].borrowedTokens += amount;
         accountSnapshot[msg.sender].entryExchangeRate = exchangeRate;
+
+        accountSnapshot[msg.sender].hasDebt = true;
 
         // Contract call is secure since the underlying asset is controlled by contract owner
         underlyingAsset.transfer(msg.sender, amount);
@@ -126,6 +130,10 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
 
         accountSnapshot[msg.sender].borrowedTokens = priorBorrowed - amount;
         accountSnapshot[msg.sender].entryExchangeRate = exchangeRate;
+
+        if (accountSnapshot[msg.sender].borrowedTokens == 0) {
+            accountSnapshot[msg.sender].hasDebt = false;
+        }
     }
 
     /*
@@ -149,29 +157,29 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             )
         );
 
-        _mint(msg.sender, amount);
-        underlyingAsset.transferFrom(
-            msg.sender,
-            address(this),
-            Math.applyInversedFactor(amount, exchangeRate)
-        );
+        _mint(msg.sender, Math.applyFactor(amount, exchangeRate));
+        underlyingAsset.transferFrom(msg.sender, address(this), amount);
     }
 
     /*
-     * @param {uint256 amount}
+     * @param {uint256 amount} Is the dToken amount that will be withdrawn from the contract
      */
     function redeem(uint256 amount) external override {
         require(
             accumulateInterest() == Errors.NO_ERROR,
             "INTEREST_CALC_FAILED"
         );
+        uint256 underTokensAmount = Math.applyInversedFactor(
+            amount,
+            exchangeRate
+        );
         uint256 code = controller.allowRedeem(
             address(this),
             msg.sender,
-            amount
+            underTokensAmount
         );
         require(
-            code != Errors.NO_ERROR,
+            code == Errors.NO_ERROR,
             string(
                 abi.encodePacked(
                     "REDEEM_NOT_ALLOWED: code=",
@@ -180,12 +188,14 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             )
         );
 
+        console.log(
+            "Burning %d dTokens",
+            amount
+        );
         _burn(msg.sender, amount);
 
-        underlyingAsset.transfer(
-            msg.sender,
-            Math.applyFactor(amount, exchangeRate)
-        );
+        console.log("Transferring %d actual tokens...", amount);
+        underlyingAsset.transfer(msg.sender, underTokensAmount);
     }
 
     function liquidate(
@@ -275,7 +285,14 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
                 totalSupplied - notBorrowedAmount
             );
 
+        console.log("WARN: interest not activated");
         uint256 accumulatedInterest = accumulatedInterestByBlock * blocksDiff;
+        exchangeRate.numerator += accumulatedInterest;
+
+        return Errors.NO_ERROR;
+    }
+
+    function sumInterest(uint256 accumulatedInterest) external onlyOwner returns (uint256) {
         exchangeRate.numerator += accumulatedInterest;
 
         return Errors.NO_ERROR;
@@ -288,6 +305,9 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         view
         returns (uint256)
     {
+        if (!accountSnapshot[account].hasDebt) {
+            return 0;
+        }
         uint256 borrowed = accountSnapshot[account].borrowedTokens;
         Math.Factor memory initialRate = accountSnapshot[account]
             .entryExchangeRate;
@@ -307,8 +327,8 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         returns (uint256 borrowedTokens, uint256 collateralizedTokens)
     {
         return (
-            Math.applyFactor(balanceOf(account), exchangeRate),
-            IERC20(underlyingAsset).balanceOf(account)
+            normalizeDebtToCurrentExchangeRate(account),
+            Math.applyInversedFactor(balanceOf(account), exchangeRate)
         );
     }
 }

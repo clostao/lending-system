@@ -16,8 +16,8 @@ async function main() {
   const tokenOne = MintableToken.attach(object.TokenTest1);
   const debtTokenOne = DebtToken.attach(object.DebtTokenTest1);
 
-  await tokenOne.approve(object.DebtTokenTest1, 100);
-  await debtTokenOne.mint(100);
+  await tokenOne.approve(object.DebtTokenTest1, "10000000000");
+  await debtTokenOne.mint(1);
 }
 
 main().catch((err) => {

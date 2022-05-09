@@ -8,6 +8,7 @@ import "./interfaces/IPriceOracle.sol";
 import "./utils/ProtocolControllerStructs.sol";
 import "./utils/Error.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 contract ProtocolController is IProtocolController, Ownable {
     struct MarketInfo {
@@ -19,9 +20,15 @@ contract ProtocolController is IProtocolController, Ownable {
 
     mapping(address => MarketInfo) public availableMarkets;
 
-    mapping(address => address[]) public userActiveMarkets;
+    address[] public marketAddresses;
 
     IPriceOracle public priceOracle;
+
+    // constructor
+
+    constructor(address _priceOracle) {
+        priceOracle = IPriceOracle(_priceOracle);
+    }
 
     // Only Owner methods
 
@@ -37,10 +44,8 @@ contract ProtocolController is IProtocolController, Ownable {
         );
         availableMarkets[marketAddress].isListed = true;
         availableMarkets[marketAddress].underlyingAsset = underlyingAsset;
-    }
-
-    function removeMarket(address marketAddress) external onlyOwner {
-        availableMarkets[marketAddress].isListed = false;
+        marketAddresses.push(marketAddress);
+        console.log("Added market with %s into protocol controller.", marketAddress);
     }
 
     // Helpers
@@ -48,29 +53,31 @@ contract ProtocolController is IProtocolController, Ownable {
     function getExpectedLiquidity(
         address account,
         IDebtToken tokenToBeModified,
-        uint256 toBeBorrowedAmount,
-        uint256 toBeDepositedAmount
+        uint256 toBeRedeemed,
+        uint256 toBeBorrowed
     ) public view returns (bool, uint256) {
-        address[] memory accountMarkets = userActiveMarkets[account];
-
+        console.log("Entry");
         ProtocolControllerStructs.AccountLiquidity memory vars;
-        for (uint256 i = accountMarkets.length; i >= 0; i--) {
-            vars.token = IDebtToken(accountMarkets[i]);
-            vars.underlyingAssetAddress = IERC20(
-                availableMarkets[accountMarkets[i]].underlyingAsset
-            );
-            (vars.borrowedTokenBalance, vars.collateralizedTokenAmount) = vars
-                .token
+        for (uint256 i = 0; i < marketAddresses.length; i++) {
+            vars.token = marketAddresses[i];
+            console.log("Entry: %d", i);
+            (vars.borrowedTokenBalance, vars.collateralizedTokenAmount) = IDebtToken(vars
+                .token)
                 .getAccountSnapshot(account);
-
-            vars.tokenPriceFactor = priceOracle.getPrice(address(vars.token));
-            vars.collateralFactor = availableMarkets[accountMarkets[i]]
+            console.log("Balances: %d | %d", vars.borrowedTokenBalance, vars.collateralizedTokenAmount);
+        
+            console.log("Collateralized: %d", vars.collateralizedTokenAmount);
+            vars.tokenPriceFactor = priceOracle.getPrice(marketAddresses[i]);
+            vars.collateralFactor = availableMarkets[marketAddresses[i]]
                 .collateralFactor;
 
+            console.log("Price: %d / %d", vars.tokenPriceFactor.numerator, vars.tokenPriceFactor.denominator);
+            console.log("Borrowed: %d", vars.borrowedTokenBalance);
             vars.totalBorrowedBalance += Math.applyFactor(
                 vars.borrowedTokenBalance,
                 vars.tokenPriceFactor
             );
+
 
             vars.totalCollateralizedAmount += Math.applyFactor(
                 Math.applyFactor(
@@ -80,28 +87,38 @@ contract ProtocolController is IProtocolController, Ownable {
                 vars.tokenPriceFactor
             );
 
-            if (address(tokenToBeModified) == address(vars.token)) {
+            console.log("Collateral: %d", vars.collateralizedTokenAmount);
+
+            if (address(tokenToBeModified) == vars.token) {
+                console.log("pre: Total borrow balance %d", vars.totalBorrowedBalance);
+
                 vars.totalBorrowedBalance += Math.applyFactor(
-                    Math.applyFactor(toBeBorrowedAmount, vars.collateralFactor),
+                    Math.applyFactor(toBeRedeemed, vars.collateralFactor),
+                    vars.tokenPriceFactor
+                );
+                
+                vars.totalBorrowedBalance += Math.applyFactor(
+                    toBeBorrowed,
                     vars.tokenPriceFactor
                 );
 
-                vars.totalCollateralizedAmount += Math.applyFactor(
-                    toBeDepositedAmount,
-                    vars.tokenPriceFactor
-                );
+                
+                console.log("post: Total borrow balance %d", vars.totalBorrowedBalance);
             }
+            console.log("Out: %d", i);
         }
 
-        if (vars.totalBorrowedBalance > vars.totalCollateralizedAmount) {
+        console.log("Total collateral: %d", vars.totalCollateralizedAmount);
+        console.log("Total borrowed: %d", vars.totalBorrowedBalance);
+        if (vars.totalBorrowedBalance <= vars.totalCollateralizedAmount) {
             return (
                 true,
-                vars.totalBorrowedBalance - vars.totalCollateralizedAmount
+                vars.totalCollateralizedAmount - vars.totalBorrowedBalance
             );
         } else {
             return (
                 false,
-                vars.totalCollateralizedAmount - vars.totalBorrowedBalance
+                vars.totalBorrowedBalance - vars.totalCollateralizedAmount
             );
         }
     }
@@ -234,7 +251,7 @@ contract ProtocolController is IProtocolController, Ownable {
         (bool isNowSolvent, ) = getExpectedLiquidity(
             borrower,
             IDebtToken(address(0)),
-            amount,
+            0,
             0
         );
         if (isNowSolvent) {
@@ -243,8 +260,8 @@ contract ProtocolController is IProtocolController, Ownable {
         (bool isThenSolvent, ) = getExpectedLiquidity(
             borrower,
             collateralToken,
-            amount,
-            0
+            0,
+            amount
         );
         liquidator;
         return isThenSolvent ? Errors.NO_ERROR : Errors.USER_WONT_BE_SOLVENT;
