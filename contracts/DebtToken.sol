@@ -115,7 +115,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         );
         uint256 code = controller.allowRepay(address(this), msg.sender, amount);
         require(
-            code != Errors.NO_ERROR,
+            code == Errors.NO_ERROR,
             string(
                 abi.encodePacked(
                     "REPAY_NOT_ALLOWED: code=",
@@ -175,6 +175,9 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             accumulateInterest() == Errors.NO_ERROR,
             "INTEREST_CALC_FAILED"
         );
+        if (amount == type(uint256).max) {
+            amount = balanceOf(msg.sender);
+        }
         uint256 underTokensAmount = Math.applyInversedFactor(
             amount,
             exchangeRate
@@ -197,7 +200,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         console.log("Burning %d dTokens", amount);
         _burn(msg.sender, amount);
 
-        console.log("Transferring %d actual tokens...", amount);
+        console.log("Transferring %d actual tokens...", underTokensAmount);
         underlyingAsset.transfer(msg.sender, underTokensAmount);
     }
 
@@ -275,25 +278,43 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             return Errors.NO_ERROR;
         }
 
-        uint256 totalSupplied = Math.applyInversedFactor(
+        uint256 actualTotalSupplied = Math.applyInversedFactor(
             totalSupply(),
             exchangeRate
         );
 
         uint256 notBorrowedAmount = underlyingAsset.balanceOf(address(this));
 
-        uint256 accumulatedInterestByBlock = interestRateModel
-            .calculateBorrowerInterestRate(
-                totalSupplied,
-                totalSupplied - notBorrowedAmount
-            );
+        uint256 borrowedAmount = actualTotalSupplied - notBorrowedAmount;
 
-        uint256 accumulatedInterest = accumulatedInterestByBlock * blocksDiff;
+        console.log("-----");
+        console.log("----- Borrowed");
+        console.log(borrowedAmount);
+        console.log("----- Supplied");
+        console.log(actualTotalSupplied);
+        console.log("----- ");
+
+        if (borrowedAmount == 0) {
+            return Errors.NO_ERROR;
+        }
+
+        Math.Factor memory accumulatedInterestByBlock = interestRateModel
+            .calculateBorrowerInterestRate(actualTotalSupplied, borrowedAmount);
+
+        Math.Factor memory accumulatedInterest = Math.Factor(
+            accumulatedInterestByBlock.numerator * blocksDiff,
+            accumulatedInterestByBlock.denominator
+        );
+
+        uint256 totalInterest = Math.applyFactor(
+            borrowedAmount,
+            accumulatedInterest
+        );
 
         exchangeRate.denominator = Math.applyFactor(
             exchangeRate.denominator,
             Math.Factor(
-                exchangeRate.denominator + accumulatedInterest,
+                exchangeRate.denominator + totalInterest,
                 exchangeRate.denominator
             )
         );

@@ -8,5 +8,5 @@ interface IInterestRateModel {
     function calculateBorrowerInterestRate(
         uint256 totalSupplied,
         uint256 totalBorrowed
-    ) external returns (uint256);
+    ) external returns (Math.Factor memory);
 }
