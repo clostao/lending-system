@@ -39,7 +39,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         controller = IProtocolController(_controller);
         interestRateModel = IInterestRateModel(_interestModel);
         lastInterestBlock = block.number;
-        exchangeRate = Math.Factor(10**5, 1);
+        exchangeRate = Math.Factor(10**10, 10**5);
     }
 
     // Configuration
@@ -282,20 +282,20 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
 
         uint256 notBorrowedAmount = underlyingAsset.balanceOf(address(this));
 
-        Math.Factor memory accumulatedInterestByBlock = interestRateModel
+        uint256 accumulatedInterestByBlock = interestRateModel
             .calculateBorrowerInterestRate(
                 totalSupplied,
                 totalSupplied - notBorrowedAmount
             );
 
-        Math.Factor memory accumulatedInterest = Math.Factor(
-            accumulatedInterestByBlock.numerator * blocksDiff,
-            accumulatedInterestByBlock.denominator
-        );
+        uint256 accumulatedInterest = accumulatedInterestByBlock * blocksDiff;
 
-        exchangeRate.numerator += Math.applyFactor(
-            exchangeRate.numerator,
-            accumulatedInterest
+        exchangeRate.denominator = Math.applyFactor(
+            exchangeRate.denominator,
+            Math.Factor(
+                exchangeRate.denominator + accumulatedInterest,
+                exchangeRate.denominator
+            )
         );
 
         return Errors.NO_ERROR;
@@ -306,15 +306,13 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         onlyOwner
         returns (uint256)
     {
-        exchangeRate.numerator -= accumulatedInterest;
-
-        // Math.applyInversedFactor(
-        //     exchangeRate.numerator,
-        //     Math.Factor(
-        //         exchangeRate.numerator + accumulatedInterest,
-        //         exchangeRate.numerator
-        //     )
-        // );
+        exchangeRate.denominator = Math.applyFactor(
+            exchangeRate.denominator,
+            Math.Factor(
+                exchangeRate.denominator + accumulatedInterest,
+                exchangeRate.denominator
+            )
+        );
 
         return Errors.NO_ERROR;
     }

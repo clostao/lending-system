@@ -34,7 +34,7 @@ describe("Two markets", function () {
       })
     const MintableToken = await ethers.getContractFactory("MintableToken")
     const ConstantRateModel = await ethers.getContractFactory("ConstantRateModel")
-    const interestModel = await ConstantRateModel.deploy(0, 1)
+    const interestModel = await ConstantRateModel.deploy(0)
     underTokenOne = await MintableToken.deploy("TEST 1", "TST1")
     underTokenTwo = await MintableToken.deploy("TEST 2", "TST2")
     debtTokenOne = await DebtToken.deploy("Debt TEST Token 1", "dTST1", underTokenOne.address, protocolContract.address, interestModel.address)

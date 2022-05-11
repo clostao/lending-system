@@ -33,7 +33,7 @@ describe("One market", function () {
         },
       })
     const underToken = await MintableToken.deploy("TEST", "TST")
-    const interestModel = await ConstantRateModel.deploy(0, 1)
+    const interestModel = await ConstantRateModel.deploy(0)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     priceOracle.setPrice(debtToken.address, BigNumber.from(10).pow(18), 1)
     await protocolContract.addMarket(debtToken.address, 95, 100, underToken.address)
@@ -53,7 +53,7 @@ describe("One market", function () {
         },
       })
     const underToken = await MintableToken.deploy("TEST", "TST")
-    const interestModel = await ConstantRateModel.deploy(0, 1)
+    const interestModel = await ConstantRateModel.deploy(0)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await priceOracle.setPrice(debtToken.address, BigNumber.from(10).pow(18), 1)
     await protocolContract.addMarket(debtToken.address, 95, 100, underToken.address)
@@ -72,7 +72,7 @@ describe("One market", function () {
         },
       })
     const underToken = await MintableToken.deploy("TEST", "TST")
-    const interestModel = await ConstantRateModel.deploy(0, 1)
+    const interestModel = await ConstantRateModel.deploy(0)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await underToken.mint(signer.address, 1000000)
     await underToken.approve(debtToken.address, 1000000)
@@ -94,7 +94,7 @@ describe("One market", function () {
         },
       })
     const underToken = await MintableToken.deploy("TEST", "TST")
-    const interestModel = await ConstantRateModel.deploy(0, 1)
+    const interestModel = await ConstantRateModel.deploy(0)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await underToken.mint(signer.address, 1000000)
     await underToken.approve(debtToken.address, 1000000)
@@ -117,7 +117,7 @@ describe("One market", function () {
         },
       })
     const underToken = await MintableToken.deploy("TEST", "TST")
-    const interestModel = await ConstantRateModel.deploy(0, 1)
+    const interestModel = await ConstantRateModel.deploy(0)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await underToken.mint(signer.address, 1000000)
     await underToken.approve(debtToken.address, 1000000)

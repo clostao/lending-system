@@ -7,26 +7,20 @@ import "../utils/Math.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ConstantRateModel is IInterestRateModel, Ownable {
-    Math.Factor public blockRate;
+    uint256 public blockRate;
 
-    constructor(uint256 _blockRateNumerator, uint256 _blockRateDenominator) {
-        blockRate = Math.Factor(_blockRateNumerator, _blockRateDenominator);
+    constructor(uint256 _blockRate) {
+        blockRate = _blockRate;
     }
 
     function calculateBorrowerInterestRate(
-        uint256 totalSupplied,
+        uint256, //_totalSupplied
         uint256 //_totalBorrowed
-    ) external view override returns (Math.Factor memory) {
-        if (totalSupplied == 0) {
-            return Math.Factor(0, 1);
-        }
-        return Math.Factor(blockRate.numerator, blockRate.denominator);
+    ) external view override returns (uint256) {
+        return blockRate;
     }
 
-    function setBlockRate(
-        uint256 _blockRateNumerator,
-        uint256 _blockRateDenominator
-    ) external onlyOwner {
-        blockRate = Math.Factor(_blockRateNumerator, _blockRateDenominator);
+    function setBlockRate(uint256 _blockRate) external onlyOwner {
+        blockRate = _blockRate;
     }
 }
