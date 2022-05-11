@@ -126,10 +126,16 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
 
         uint256 priorBorrowed = normalizeDebtToCurrentExchangeRate(msg.sender);
 
+        if (amount == type(uint256).max) {
+            amount = priorBorrowed;
+        }
+
         require(priorBorrowed >= amount, "REPAY_INVALID_AMOUNT");
 
         accountSnapshot[msg.sender].borrowedTokens = priorBorrowed - amount;
         accountSnapshot[msg.sender].entryExchangeRate = exchangeRate;
+
+        underlyingAsset.transferFrom(msg.sender, address(this), amount);
 
         if (accountSnapshot[msg.sender].borrowedTokens == 0) {
             accountSnapshot[msg.sender].hasDebt = false;
@@ -188,10 +194,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             )
         );
 
-        console.log(
-            "Burning %d dTokens",
-            amount
-        );
+        console.log("Burning %d dTokens", amount);
         _burn(msg.sender, amount);
 
         console.log("Transferring %d actual tokens...", amount);
@@ -279,21 +282,39 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
 
         uint256 notBorrowedAmount = underlyingAsset.balanceOf(address(this));
 
-        uint256 accumulatedInterestByBlock = interestRateModel
+        Math.Factor memory accumulatedInterestByBlock = interestRateModel
             .calculateBorrowerInterestRate(
                 totalSupplied,
                 totalSupplied - notBorrowedAmount
             );
 
-        console.log("WARN: interest not activated");
-        uint256 accumulatedInterest = accumulatedInterestByBlock * blocksDiff;
-        exchangeRate.numerator += accumulatedInterest;
+        Math.Factor memory accumulatedInterest = Math.Factor(
+            accumulatedInterestByBlock.numerator * blocksDiff,
+            accumulatedInterestByBlock.denominator
+        );
+
+        exchangeRate.numerator += Math.applyFactor(
+            exchangeRate.numerator,
+            accumulatedInterest
+        );
 
         return Errors.NO_ERROR;
     }
 
-    function sumInterest(uint256 accumulatedInterest) external onlyOwner returns (uint256) {
-        exchangeRate.numerator += accumulatedInterest;
+    function sumInterest(uint256 accumulatedInterest)
+        external
+        onlyOwner
+        returns (uint256)
+    {
+        exchangeRate.numerator -= accumulatedInterest;
+
+        // Math.applyInversedFactor(
+        //     exchangeRate.numerator,
+        //     Math.Factor(
+        //         exchangeRate.numerator + accumulatedInterest,
+        //         exchangeRate.numerator
+        //     )
+        // );
 
         return Errors.NO_ERROR;
     }
@@ -315,8 +336,8 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         // borrowed * currentRate / initialRate;
         return
             Math.applyInversedFactor(
-                Math.applyFactor(borrowed, exchangeRate),
-                initialRate
+                Math.applyFactor(borrowed, initialRate),
+                exchangeRate
             );
     }
 

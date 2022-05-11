@@ -1,12 +1,12 @@
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { ProtocolController, Math as SolMath, FixedPriceOracle, Errors } from "../typechain";
+import { ProtocolController, Math as SolMath, FixedPriceOracle, Errors, DebtToken, MintableToken } from "../typechain";
 
-describe("ProtocolController", function () {
-  let protocolContract : ProtocolController;
-  let mathContract : SolMath;
-  let priceOracle : FixedPriceOracle
+describe("One market", function () {
+  let protocolContract: ProtocolController;
+  let mathContract: SolMath;
+  let priceOracle: FixedPriceOracle
   this.beforeEach(async () => {
     const MathFactory = await ethers.getContractFactory("Math")
     mathContract = await MathFactory.deploy()
@@ -27,13 +27,13 @@ describe("ProtocolController", function () {
     const MintableToken = await ethers.getContractFactory("MintableToken")
     const ConstantRateModel = await ethers.getContractFactory("ConstantRateModel")
     const DebtToken = await ethers.getContractFactory("DebtToken",
-    {
-      libraries: {
-        Math: mathContract.address,
-      },
-    })
+      {
+        libraries: {
+          Math: mathContract.address,
+        },
+      })
     const underToken = await MintableToken.deploy("TEST", "TST")
-    const interestModel = await ConstantRateModel.deploy(0)
+    const interestModel = await ConstantRateModel.deploy(0, 1)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     priceOracle.setPrice(debtToken.address, BigNumber.from(10).pow(18), 1)
     await protocolContract.addMarket(debtToken.address, 95, 100, underToken.address)
@@ -47,13 +47,13 @@ describe("ProtocolController", function () {
     const MintableToken = await ethers.getContractFactory("MintableToken")
     const ConstantRateModel = await ethers.getContractFactory("ConstantRateModel")
     const DebtToken = await ethers.getContractFactory("DebtToken",
-    {
-      libraries: {
-        Math: mathContract.address,
-      },
-    })
+      {
+        libraries: {
+          Math: mathContract.address,
+        },
+      })
     const underToken = await MintableToken.deploy("TEST", "TST")
-    const interestModel = await ConstantRateModel.deploy(0)
+    const interestModel = await ConstantRateModel.deploy(0, 1)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await priceOracle.setPrice(debtToken.address, BigNumber.from(10).pow(18), 1)
     await protocolContract.addMarket(debtToken.address, 95, 100, underToken.address)
@@ -66,13 +66,13 @@ describe("ProtocolController", function () {
     const MintableToken = await ethers.getContractFactory("MintableToken")
     const ConstantRateModel = await ethers.getContractFactory("ConstantRateModel")
     const DebtToken = await ethers.getContractFactory("DebtToken",
-    {
-      libraries: {
-        Math: mathContract.address,
-      },
-    })
+      {
+        libraries: {
+          Math: mathContract.address,
+        },
+      })
     const underToken = await MintableToken.deploy("TEST", "TST")
-    const interestModel = await ConstantRateModel.deploy(0)
+    const interestModel = await ConstantRateModel.deploy(0, 1)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await underToken.mint(signer.address, 1000000)
     await underToken.approve(debtToken.address, 1000000)
@@ -81,26 +81,27 @@ describe("ProtocolController", function () {
     await priceOracle.setPrice(debtToken.address, 2, 1)
     const [solvent, balance] = await protocolContract.getExpectedLiquidity(signer.address, debtToken.address, 0, 0)
     expect(solvent).to.be.true
-    expect(balance.toNumber()).to.be.equal(1900000)
+    expect(balance).to.be.equal(1900000)
   })
   it("Add market, mint and redeem", async function () {
     const [signer] = await ethers.getSigners()
     const MintableToken = await ethers.getContractFactory("MintableToken")
     const ConstantRateModel = await ethers.getContractFactory("ConstantRateModel")
     const DebtToken = await ethers.getContractFactory("DebtToken",
-    {
-      libraries: {
-        Math: mathContract.address,
-      },
-    })
+      {
+        libraries: {
+          Math: mathContract.address,
+        },
+      })
     const underToken = await MintableToken.deploy("TEST", "TST")
-    const interestModel = await ConstantRateModel.deploy(0)
+    const interestModel = await ConstantRateModel.deploy(0, 1)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await underToken.mint(signer.address, 1000000)
     await underToken.approve(debtToken.address, 1000000)
     await protocolContract.addMarket(debtToken.address, 95, 100, underToken.address)
     await priceOracle.setPrice(debtToken.address, 2, 1)
     await debtToken.mint(1000000)
+    expect(await debtToken.balanceOf(signer.address)).to.be.equals(BigNumber.from(10).pow(11))
     expect(await underToken.balanceOf(signer.address)).to.be.equal(0)
     await debtToken.redeem(await debtToken.balanceOf(signer.address))
     expect(await underToken.balanceOf(signer.address)).to.be.equal(1000000)
@@ -110,13 +111,13 @@ describe("ProtocolController", function () {
     const MintableToken = await ethers.getContractFactory("MintableToken")
     const ConstantRateModel = await ethers.getContractFactory("ConstantRateModel")
     const DebtToken = await ethers.getContractFactory("DebtToken",
-    {
-      libraries: {
-        Math: mathContract.address,
-      },
-    })
+      {
+        libraries: {
+          Math: mathContract.address,
+        },
+      })
     const underToken = await MintableToken.deploy("TEST", "TST")
-    const interestModel = await ConstantRateModel.deploy(0)
+    const interestModel = await ConstantRateModel.deploy(0, 1)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await underToken.mint(signer.address, 1000000)
     await underToken.approve(debtToken.address, 1000000)
@@ -129,13 +130,13 @@ describe("ProtocolController", function () {
     expect(balance).to.be.equal(0)
     await debtToken.borrow(950000)
     let [borrowed] = await debtToken.getAccountSnapshot(signer.address)
-    //await debtToken.sumInterest(1);
+    await debtToken.sumInterest(1);
     expect(borrowed).to.be.equals(950000)
     expect(await underToken.balanceOf(signer.address)).to.be.equal(950000);
     const [totalBorrowed, collateral] = await debtToken.getAccountSnapshot(signer.address)
-    expect(totalBorrowed).to.be.equals(BigNumber.from(950000).mul(1).div(10000))
-    expect(collateral).to.be.equals(1000000)
+    expect(totalBorrowed).to.be.equals(BigNumber.from(950000).mul(100001).div(100000))
+    expect(collateral).to.be.equals(1000010)
     const allowed = await protocolContract.allowLiquidate(debtToken.address, signer.address, liquidator.address, 950000, debtToken.address)
-    expect(allowed).to.be.equal(0)
+    expect(allowed).to.be.equal(5)
   })
 });

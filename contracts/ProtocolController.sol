@@ -45,7 +45,10 @@ contract ProtocolController is IProtocolController, Ownable {
         availableMarkets[marketAddress].isListed = true;
         availableMarkets[marketAddress].underlyingAsset = underlyingAsset;
         marketAddresses.push(marketAddress);
-        console.log("Added market with %s into protocol controller.", marketAddress);
+        console.log(
+            "Added market with %s into protocol controller.",
+            marketAddress
+        );
     }
 
     // Helpers
@@ -60,24 +63,33 @@ contract ProtocolController is IProtocolController, Ownable {
         ProtocolControllerStructs.AccountLiquidity memory vars;
         for (uint256 i = 0; i < marketAddresses.length; i++) {
             vars.token = marketAddresses[i];
+            console.log("Data from %s", vars.token);
             console.log("Entry: %d", i);
-            (vars.borrowedTokenBalance, vars.collateralizedTokenAmount) = IDebtToken(vars
-                .token)
-                .getAccountSnapshot(account);
-            console.log("Balances: %d | %d", vars.borrowedTokenBalance, vars.collateralizedTokenAmount);
-        
+            (
+                vars.borrowedTokenBalance,
+                vars.collateralizedTokenAmount
+            ) = IDebtToken(vars.token).getAccountSnapshot(account);
+            console.log(
+                "Balances: %d | %d",
+                vars.borrowedTokenBalance,
+                vars.collateralizedTokenAmount
+            );
+
             console.log("Collateralized: %d", vars.collateralizedTokenAmount);
             vars.tokenPriceFactor = priceOracle.getPrice(marketAddresses[i]);
             vars.collateralFactor = availableMarkets[marketAddresses[i]]
                 .collateralFactor;
 
-            console.log("Price: %d / %d", vars.tokenPriceFactor.numerator, vars.tokenPriceFactor.denominator);
+            console.log(
+                "Price: %d / %d",
+                vars.tokenPriceFactor.numerator,
+                vars.tokenPriceFactor.denominator
+            );
             console.log("Borrowed: %d", vars.borrowedTokenBalance);
             vars.totalBorrowedBalance += Math.applyFactor(
                 vars.borrowedTokenBalance,
                 vars.tokenPriceFactor
             );
-
 
             vars.totalCollateralizedAmount += Math.applyFactor(
                 Math.applyFactor(
@@ -90,20 +102,25 @@ contract ProtocolController is IProtocolController, Ownable {
             console.log("Collateral: %d", vars.collateralizedTokenAmount);
 
             if (address(tokenToBeModified) == vars.token) {
-                console.log("pre: Total borrow balance %d", vars.totalBorrowedBalance);
+                console.log(
+                    "pre: Total borrow balance %d",
+                    vars.totalBorrowedBalance
+                );
 
                 vars.totalBorrowedBalance += Math.applyFactor(
                     Math.applyFactor(toBeRedeemed, vars.collateralFactor),
                     vars.tokenPriceFactor
                 );
-                
+
                 vars.totalBorrowedBalance += Math.applyFactor(
                     toBeBorrowed,
                     vars.tokenPriceFactor
                 );
 
-                
-                console.log("post: Total borrow balance %d", vars.totalBorrowedBalance);
+                console.log(
+                    "post: Total borrow balance %d",
+                    vars.totalBorrowedBalance
+                );
             }
             console.log("Out: %d", i);
         }
