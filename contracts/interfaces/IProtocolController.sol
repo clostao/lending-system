@@ -31,17 +31,18 @@ interface IProtocolController {
 
     function allowLiquidate(
         address debtToken,
-        address user,
+        IDebtToken seizedToken,
         address borrower,
+        address liquidator,
         uint256 repayAmount,
-        IDebtToken collateralToken
+        Math.Factor memory liquidatorRate
     ) external returns (uint8);
 
     function allowSeize(
         address debtToken,
-        address user,
+        IDebtToken seizedToken,
         address borrower,
-        uint256 repayAmount,
-        IDebtToken collateralToken
+        address liquidator,
+        uint256 repayAmount
     ) external returns (uint8);
 }

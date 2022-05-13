@@ -7,6 +7,7 @@ import "./interfaces/IProtocolController.sol";
 import "./interfaces/IPriceOracle.sol";
 import "./utils/ProtocolControllerStructs.sol";
 import "./utils/Error.sol";
+import "./DebtToken.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
@@ -52,6 +53,77 @@ contract ProtocolController is IProtocolController, Ownable {
     }
 
     // Helpers
+
+    function calculateAmountOfCollateral(
+        address debtToken,
+        uint256 amountToBeRepayed,
+        address collateralToken
+    ) public view returns (uint256) {
+        Math.Factor memory debtPrice = priceOracle.getPrice(debtToken);
+
+        Math.Factor memory collateralPrice = priceOracle.getPrice(
+            collateralToken
+        );
+
+        return
+            Math.applyInversedFactor(
+                Math.applyFactor(amountToBeRepayed, debtPrice),
+                collateralPrice
+            );
+    }
+
+    function calculateRepayAmount(
+        address account,
+        address debtToken,
+        address collateralToken,
+        Math.Factor memory targetFactor
+    ) public view returns (bool, uint256) {
+        (uint256 borrowedDebtTokens, uint256 collateralDebtTokens) = IDebtToken(
+            debtToken
+        ).getAccountSnapshot(account);
+        console.log(
+            "Debt token: %d %d",
+            borrowedDebtTokens,
+            collateralDebtTokens
+        );
+        if (borrowedDebtTokens < collateralDebtTokens) {
+            return (false, 0);
+        }
+
+        (
+            uint256 borrowedRepayTokens,
+            uint256 collateralRepayTokens
+        ) = IDebtToken(collateralToken).getAccountSnapshot(account);
+        console.log(
+            "Collateral token: %d %d",
+            borrowedRepayTokens,
+            collateralRepayTokens
+        );
+        if (collateralRepayTokens < borrowedRepayTokens) {
+            return (false, 0);
+        }
+
+        borrowedDebtTokens -= collateralDebtTokens;
+        collateralRepayTokens -= borrowedRepayTokens;
+
+        console.log("Net borrowed: %d", borrowedDebtTokens);
+        console.log("Net collateral: %d", collateralRepayTokens);
+
+        Math.Factor memory liquidatorRate = DebtToken(collateralToken)
+            .getLiquidatorRate();
+        Math.Factor memory collateralFactor = availableMarkets[debtToken]
+            .collateralFactor;
+
+        uint256 numerator = Math.applyFactor(borrowedDebtTokens, targetFactor) -
+            Math.applyFactor(collateralRepayTokens, collateralFactor);
+        uint256 denominator = targetFactor.numerator -
+            Math.applyFactor(
+                Math.applyFactor(targetFactor.denominator, collateralFactor),
+                liquidatorRate
+            );
+
+        return (true, numerator / denominator);
+    }
 
     function getExpectedLiquidity(
         address account,
@@ -233,36 +305,37 @@ contract ProtocolController is IProtocolController, Ownable {
 
     function allowSeize(
         address debtToken,
+        IDebtToken seizedToken,
         address borrower,
         address liquidator,
-        uint256 amount,
-        IDebtToken collateralToken
+        uint256 repayAmount
     ) external view override returns (uint8) {
         uint8 code = checkUserIsInMarket(debtToken, borrower);
         if (code != 0) {
             return code;
         }
-        code = checkUserIsInMarket(address(collateralToken), borrower);
+        code = checkUserIsInMarket(address(seizedToken), borrower);
         if (code != 0) {
             return code;
         }
         liquidator;
-        amount;
+        repayAmount;
         return Errors.NO_ERROR;
     }
 
     function allowLiquidate(
         address debtToken,
+        IDebtToken seizedToken,
         address borrower,
         address liquidator,
-        uint256 amount,
-        IDebtToken collateralToken
+        uint256 repayAmount,
+        Math.Factor memory liquidatorRate
     ) external view override returns (uint8) {
         uint8 code = checkUserIsInMarket(debtToken, borrower);
         if (code != 0) {
             return code;
         }
-        if (!availableMarkets[address(collateralToken)].isListed) {
+        if (!availableMarkets[address(seizedToken)].isListed) {
             return Errors.COLLATERAL_IS_NOT_LISTED;
         }
         (bool isNowSolvent, ) = getExpectedLiquidity(
@@ -274,13 +347,9 @@ contract ProtocolController is IProtocolController, Ownable {
         if (isNowSolvent) {
             return Errors.USER_IS_SOLVENT;
         }
-        (bool isThenSolvent, ) = getExpectedLiquidity(
-            borrower,
-            collateralToken,
-            0,
-            amount
-        );
         liquidator;
-        return isThenSolvent ? Errors.NO_ERROR : Errors.USER_WONT_BE_SOLVENT;
+        repayAmount;
+        liquidatorRate;
+        return Errors.NO_ERROR;
     }
 }

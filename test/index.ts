@@ -36,10 +36,10 @@ describe("One market", function () {
     const interestModel = await ConstantRateModel.deploy(0, 1)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     priceOracle.setPrice(debtToken.address, BigNumber.from(10).pow(18), 1)
-    await protocolContract.addMarket(debtToken.address, 95, 100, underToken.address)
+    await protocolContract.addMarket(debtToken.address, 80, 100, underToken.address)
     expect((await protocolContract.availableMarkets(debtToken.address)).isListed).to.be.true
     expect((await protocolContract.availableMarkets(debtToken.address)).underlyingAsset).to.be.equal(underToken.address)
-    expect((await protocolContract.availableMarkets(debtToken.address)).collateralFactor.numerator).to.be.equal(95)
+    expect((await protocolContract.availableMarkets(debtToken.address)).collateralFactor.numerator).to.be.equal(80)
     expect((await protocolContract.availableMarkets(debtToken.address)).collateralFactor.denominator).to.be.equal(100)
   })
   it("Add market and check liquidity", async function () {
@@ -56,7 +56,7 @@ describe("One market", function () {
     const interestModel = await ConstantRateModel.deploy(0, 1)
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await priceOracle.setPrice(debtToken.address, BigNumber.from(10).pow(18), 1)
-    await protocolContract.addMarket(debtToken.address, 95, 100, underToken.address)
+    await protocolContract.addMarket(debtToken.address, 80, 100, underToken.address)
     const [solvent, balance] = await protocolContract.getExpectedLiquidity(signer.address, debtToken.address, 0, 0)
     expect(solvent).to.be.true
     expect(balance.toNumber()).to.be.equal(0)
@@ -76,12 +76,12 @@ describe("One market", function () {
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await underToken.mint(signer.address, 1000000)
     await underToken.approve(debtToken.address, 1000000)
-    await protocolContract.addMarket(debtToken.address, 95, 100, underToken.address)
+    await protocolContract.addMarket(debtToken.address, 80, 100, underToken.address)
     await debtToken.mint(1000000)
     await priceOracle.setPrice(debtToken.address, 2, 1)
     const [solvent, balance] = await protocolContract.getExpectedLiquidity(signer.address, debtToken.address, 0, 0)
     expect(solvent).to.be.true
-    expect(balance).to.be.equal(1900000)
+    expect(balance).to.be.equal(1600000)
   })
   it("Add market, mint and redeem", async function () {
     const [signer] = await ethers.getSigners()
@@ -98,7 +98,7 @@ describe("One market", function () {
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await underToken.mint(signer.address, 1000000)
     await underToken.approve(debtToken.address, 1000000)
-    await protocolContract.addMarket(debtToken.address, 95, 100, underToken.address)
+    await protocolContract.addMarket(debtToken.address, 80, 100, underToken.address)
     await priceOracle.setPrice(debtToken.address, 2, 1)
     await debtToken.mint(1000000)
     expect(await debtToken.balanceOf(signer.address)).to.be.equals(BigNumber.from(10).pow(11))
@@ -121,23 +121,21 @@ describe("One market", function () {
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await underToken.mint(signer.address, 1000000)
     await underToken.approve(debtToken.address, 1000000)
-    await protocolContract.addMarket(debtToken.address, 95, 100, underToken.address)
+    await protocolContract.addMarket(debtToken.address, 80, 100, underToken.address)
     await priceOracle.setPrice(debtToken.address, 2, 1)
     await debtToken.mint(1000000)
     expect(await underToken.balanceOf(signer.address)).to.be.equal(0)
-    let [solvent, balance] = await protocolContract.getExpectedLiquidity(signer.address, debtToken.address, 0, 950000)
+    let [solvent, balance] = await protocolContract.getExpectedLiquidity(signer.address, debtToken.address, 0, 800000)
     expect(solvent).to.be.equal(true)
     expect(balance).to.be.equal(0)
-    await debtToken.borrow(950000)
+    await debtToken.borrow(800000)
     let [borrowed] = await debtToken.getAccountSnapshot(signer.address)
     await debtToken.sumInterest(1);
-    expect(borrowed).to.be.equals(950000)
-    expect(await underToken.balanceOf(signer.address)).to.be.equal(950000);
+    expect(borrowed).to.be.equals(800000)
+    expect(await underToken.balanceOf(signer.address)).to.be.equal(800000);
     const [totalBorrowed, collateral] = await debtToken.getAccountSnapshot(signer.address)
-    expect(totalBorrowed).to.be.equals(BigNumber.from(950000).mul(100001).div(100000))
+    expect(totalBorrowed).to.be.equals(BigNumber.from(800000).mul(100001).div(100000))
     expect(collateral).to.be.equals(1000010)
-    const allowed = await protocolContract.allowLiquidate(debtToken.address, signer.address, liquidator.address, 950000, debtToken.address)
-    expect(allowed).to.be.equal(5)
   })
   it("Add market, mint, borrow and repay", async function () {
     const [signer, liquidator] = await ethers.getSigners()
@@ -154,20 +152,20 @@ describe("One market", function () {
     const debtToken = await DebtToken.deploy("Debt TEST Token", "dTST", underToken.address, protocolContract.address, interestModel.address)
     await underToken.mint(signer.address, 1000000)
     await underToken.approve(debtToken.address, 1000000)
-    await protocolContract.addMarket(debtToken.address, 95, 100, underToken.address)
+    await protocolContract.addMarket(debtToken.address, 80, 100, underToken.address)
     await priceOracle.setPrice(debtToken.address, 2, 1)
     await debtToken.mint(1000000)
     expect(await underToken.balanceOf(signer.address)).to.be.equal(0)
-    let [solvent, balance] = await protocolContract.getExpectedLiquidity(signer.address, debtToken.address, 0, 950000)
+    let [solvent, balance] = await protocolContract.getExpectedLiquidity(signer.address, debtToken.address, 0, 800000)
     expect(solvent).to.be.equal(true)
     expect(balance).to.be.equal(0)
-    await debtToken.borrow(950000)
+    await debtToken.borrow(800000)
     let [borrowed] = await debtToken.getAccountSnapshot(signer.address)
     await debtToken.sumInterest(1);
-    expect(borrowed).to.be.equals(950000)
-    expect(await underToken.balanceOf(signer.address)).to.be.equal(950000);
+    expect(borrowed).to.be.equals(800000)
+    expect(await underToken.balanceOf(signer.address)).to.be.equal(800000);
     let [totalBorrowed, collateral] = await debtToken.getAccountSnapshot(signer.address)
-    expect(totalBorrowed).to.be.equals(BigNumber.from(950000).mul(100001).div(100000))
+    expect(totalBorrowed).to.be.equals(BigNumber.from(800000).mul(100001).div(100000))
     expect(collateral).to.be.equals(1000010)
     await underToken.mint(signer.address, 1000010) // Mint more tokens for repaying loan
     await underToken.approve(debtToken.address, 1000010);// Approve allowance
@@ -176,8 +174,8 @@ describe("One market", function () {
     [borrowed, collateral] = await debtToken.getAccountSnapshot(signer.address)
     expect(borrowed).to.be.equal(0);
     expect(collateral).to.be.equal(1000010);
-    await debtToken.redeem((await debtToken.balanceOf(signer.address)).mul(100000).div(100001).add(900000))
+    await debtToken.redeem((await debtToken.balanceOf(signer.address)).mul(100000).div(100001).add(800000))
     expect(await underToken.balanceOf(signer.address)).to.be.equals(2000010)
-    expect(await debtToken.balanceOf(signer.address)).to.be.equals(99991)
+    expect(await debtToken.balanceOf(signer.address)).to.be.equals(199991)
   })
 });

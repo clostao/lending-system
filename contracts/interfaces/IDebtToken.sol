@@ -15,15 +15,15 @@ interface IDebtToken {
 
     function liquidate(
         address borrower,
-        uint256 repayAmount,
-        IDebtToken collateralToken
+        IDebtToken collateralToken,
+        uint256 repayAmount
     ) external;
 
     function seize(
+        address debtToken,
         address borrower,
         address liquidator,
-        uint256 repayAmount,
-        IDebtToken collateralToken
+        uint256 repayAmount
     ) external;
 
     function getAccountSnapshot(address account)

@@ -56,23 +56,42 @@ describe("Two markets", function () {
     expect(solvent).to.be.true
     expect(balance).to.be.equals(BigNumber.from(1000000).mul(7).mul(95).div(100))
   })
-  it("User deposit TST1 and borrows TST2, then TST1 value falls drastically", async function () {
+  it.only("User deposit TST1 and borrows TST2, then TST1 value falls drastically, TST1 can be liquidate?", async function () {
     const [signer, liquidator] = await ethers.getSigners()
     await underTokenOne.mint(signer.address, BigNumber.from(10).pow(6))
-    await priceOracle.setPrice(debtTokenOne.address, 10, 1)
+    await priceOracle.setPrice(debtTokenOne.address, 4
+
+
+
+      , 1)
     await priceOracle.setPrice(debtTokenTwo.address, 3, 1)
     const liquidatorUnderTokenTwo = underTokenTwo.connect(liquidator)
     const liquidatorDebtTokenTwo = debtTokenTwo.connect(liquidator)
+    const liquidatorUnderTokenOne = underTokenOne.connect(liquidator)
+    const liquidatorDebtTokenOne = debtTokenOne.connect(liquidator)
     await liquidatorUnderTokenTwo.mint(liquidator.address, BigNumber.from(10).pow(6))
     await liquidatorUnderTokenTwo.approve(debtTokenTwo.address, BigNumber.from(10).pow(6))
-    await liquidatorDebtTokenTwo.mint(BigNumber.from(10).pow(6))
+    await liquidatorDebtTokenTwo.mint(BigNumber.from(10).pow(5).mul(5))
     await underTokenOne.approve(debtTokenOne.address, BigNumber.from(10).pow(6))
     await underTokenTwo.approve(debtTokenTwo.address, BigNumber.from(10).pow(6))
-    await debtTokenOne.mint(BigNumber.from(10).pow(6))
-    await debtTokenTwo.borrow(BigNumber.from(10).pow(6))
-    await priceOracle.setPrice(debtTokenOne.address, 1, 1)
-    const [solvent, balance] = await protocolContract.getExpectedLiquidity(signer.address, ethers.constants.AddressZero, 0, 0)
+    await debtTokenOne.mint(BigNumber.from(10).pow(5).mul(5))
+    await debtTokenTwo.borrow(BigNumber.from(10).pow(5).mul(5))
+    await priceOracle.setPrice(debtTokenOne.address, 3, 1)
+    let [solvent, balance] = await protocolContract.getExpectedLiquidity(signer.address, ethers.constants.AddressZero, 0, 0)
     expect(solvent).to.be.false
-    expect(balance).to.be.equals(2050000)
+    expect(balance).to.be.equals(75000)
+    const price = await priceOracle.getPrice(debtTokenOne.address);
+    await debtTokenOne.mint(BigNumber.from(75000).mul(price.denominator).div(price.numerator).mul(10).div(8));
+    [solvent, balance] = await protocolContract.getExpectedLiquidity(signer.address, ethers.constants.AddressZero, 0, 0)
+    expect(solvent).to.be.true
+    // expect(await protocolContract.allowLiquidate(debtTokenTwo.address, debtTokenOne.address, signer.address, liquidator.address, 10, { numerator: 1, denominator: 1, })).to.be.equals(0)
+    // const [success, repayAmount] = await protocolContract.calculateRepayAmount(signer.address, debtTokenTwo.address, debtTokenOne.address, { numerator: 10, denominator: 9 })
+    // expect(success).to.be.true;
+    // 
+    // await debtTokenOne.mint(repayAmount.mul(price.denominator).div(price.numerator).mul(10).div(8));
+    // [solvent, balance] = await protocolContract.getExpectedLiquidity(signer.address, ethers.constants.AddressZero, 0, 0)
+    // await liquidatorUnderTokenOne.mint(liquidator.address, BigNumber.from(10).pow(6))
+    // await liquidatorUnderTokenOne.approve(debtTokenOne.address, BigNumber.from(10).pow(6))
+    // await protocolContract.calculateAmountOfCollateral(debtTokenOne.address, )
   })
 });

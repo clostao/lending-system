@@ -18,4 +18,12 @@ library ProtocolControllerStructs {
         IERC20 underlyingAssetAddress;
         address token;
     }
+    struct LiquidationInfo {
+        uint256 borrowedDebtTokens;
+        uint256 collateralDebtTokens;
+        uint256 borrowedRepayTokens;
+        uint256 collateralRepayTokens;
+        Math.Factor liquidationRate;
+        Math.Factor collateralFactor;
+    }
 }

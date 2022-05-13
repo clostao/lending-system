@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IDebtToken.sol";
-import "./interfaces/IProtocolController.sol";
+import "./ProtocolController.sol";
 import "./interfaces/IInterestModel.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -17,9 +17,9 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
     }
 
     IERC20 public underlyingAsset;
-    IProtocolController public controller;
+    ProtocolController public controller;
 
-    Math.Factor public liquidatorRate = Math.Factor(99, 100);
+    Math.Factor public liquidatorRate = Math.Factor(103, 100);
 
     uint256 public lastInterestBlock;
 
@@ -36,7 +36,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         address _interestModel
     ) ERC20(tokenName, tokenSymbol) {
         underlyingAsset = IERC20(_underlyingAsset);
-        controller = IProtocolController(_controller);
+        controller = ProtocolController(_controller);
         interestRateModel = IInterestRateModel(_interestModel);
         lastInterestBlock = block.number;
         exchangeRate = Math.Factor(10**10, 10**5);
@@ -59,7 +59,13 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
     }
 
     function updateController(address _controller) external onlyOwner {
-        controller = IProtocolController(_controller);
+        controller = ProtocolController(_controller);
+    }
+
+    // Getters
+
+    function getLiquidatorRate() public view returns (Math.Factor memory) {
+        return liquidatorRate;
     }
 
     // ERC20 Methods
@@ -74,6 +80,32 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             return type(uint256).max;
         }
         return super.allowance(owner, spender);
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) public override returns (bool) {
+        require(
+            msg.sender == address(this),
+            "Only internal dTokens transactions"
+        );
+        _transfer(from, to, amount);
+        return true;
+    }
+
+    function transfer(address to, uint256 amount)
+        public
+        override
+        returns (bool)
+    {
+        require(
+            msg.sender == address(this),
+            "Only internal dTokens transactions"
+        );
+        _transfer(msg.sender, to, amount);
+        return true;
     }
 
     // Lending system main operations
@@ -206,20 +238,23 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
 
     function liquidate(
         address borrower,
-        uint256 repayAmount,
-        IDebtToken collateralToken
+        IDebtToken collateralToken,
+        uint256 repayAmount
     ) external override {
         require(
             accumulateInterest() == Errors.NO_ERROR,
             "INTEREST_CALC_FAILED"
         );
+
         uint256 code = controller.allowLiquidate(
             address(this),
-            msg.sender,
+            collateralToken,
             borrower,
+            msg.sender,
             repayAmount,
-            collateralToken
+            liquidatorRate
         );
+
         require(
             code != Errors.NO_ERROR,
             string(
@@ -228,28 +263,52 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
                     Strings.toString(code)
                 )
             )
+        );
+
+        uint256 seizedAmount = controller.calculateAmountOfCollateral(
+            address(this),
+            repayAmount,
+            address(collateralToken)
         );
 
         collateralToken.seize(
+            address(this),
             borrower,
             msg.sender,
-            repayAmount,
-            collateralToken
+            seizedAmount
         );
+
+        uint256 underlyingTokens = Math.applyInversedFactor(
+            repayAmount,
+            exchangeRate
+        );
+
+        underlyingAsset.transferFrom(
+            msg.sender,
+            address(this),
+            underlyingTokens
+        );
+
+        uint256 normalizedDebt = normalizeDebtToCurrentExchangeRate(borrower);
+
+        accountSnapshot[borrower].borrowedTokens =
+            normalizedDebt -
+            underlyingTokens;
+        accountSnapshot[borrower].entryExchangeRate = exchangeRate;
     }
 
     function seize(
+        address debtToken,
         address borrower,
         address liquidator,
-        uint256 amount,
-        IDebtToken collateralToken
+        uint256 repayAmount
     ) external override {
         uint256 code = controller.allowSeize(
             address(this),
+            IDebtToken(debtToken),
             borrower,
             liquidator,
-            amount,
-            collateralToken
+            repayAmount
         );
         require(
             code != Errors.NO_ERROR,
@@ -261,9 +320,9 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             )
         );
 
-        uint256 liquidatorBounty = amount -
-            Math.applyFactor(amount, liquidatorRate);
-        uint256 seizedTokens = amount - liquidatorBounty;
+        uint256 liquidatorBounty = repayAmount -
+            Math.applyFactor(repayAmount, liquidatorRate);
+        uint256 seizedTokens = repayAmount - liquidatorBounty;
 
         // Own contract call for transferring funds
         DebtToken(this).transferFrom(borrower, liquidator, liquidatorBounty);
