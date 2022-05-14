@@ -256,7 +256,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         );
 
         require(
-            code != Errors.NO_ERROR,
+            code == Errors.NO_ERROR,
             string(
                 abi.encodePacked(
                     "LIQUIDATE_NOT_ALLOWED: code=",
@@ -264,6 +264,8 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
                 )
             )
         );
+
+        console.log("repay amount: %d", repayAmount);
 
         uint256 seizedAmount = controller.calculateAmountOfCollateral(
             address(this),
@@ -278,6 +280,8 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             seizedAmount
         );
 
+        console.log("seized amount: %d", seizedAmount);
+
         uint256 underlyingTokens = Math.applyInversedFactor(
             repayAmount,
             exchangeRate
@@ -291,9 +295,13 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
 
         uint256 normalizedDebt = normalizeDebtToCurrentExchangeRate(borrower);
 
+        console.log("normamlizeDebt: %s", normalizedDebt);
+        console.log("underlyingTokens: %s", underlyingTokens);
+
         accountSnapshot[borrower].borrowedTokens =
             normalizedDebt -
             underlyingTokens;
+        console.log("New debt: %s", accountSnapshot[borrower].borrowedTokens);
         accountSnapshot[borrower].entryExchangeRate = exchangeRate;
     }
 
@@ -320,13 +328,19 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             )
         );
 
-        uint256 liquidatorBounty = repayAmount -
-            Math.applyFactor(repayAmount, liquidatorRate);
-        uint256 seizedTokens = repayAmount - liquidatorBounty;
+        console.log("repay amount: %d", repayAmount);
+        console.log(
+            "Liquidator rate: %d / %d",
+            liquidatorRate.numerator,
+            liquidatorRate.denominator
+        );
+        uint256 liquidatorBounty = Math.applyFactor(
+            repayAmount,
+            liquidatorRate
+        );
 
         // Own contract call for transferring funds
         DebtToken(this).transferFrom(borrower, liquidator, liquidatorBounty);
-        DebtToken(this).transferFrom(borrower, address(this), seizedTokens);
     }
 
     // Interest model

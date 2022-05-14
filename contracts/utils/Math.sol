@@ -27,4 +27,42 @@ library Math {
         require(factor.numerator != 0, "DIVISION_BY_ZERO");
         return (amount * factor.denominator) / factor.numerator;
     }
+
+    function sumFactors(Math.Factor memory factor1, Math.Factor memory factor2)
+        public
+        pure
+        returns (Math.Factor memory)
+    {
+        return
+            Math.Factor(
+                factor1.numerator *
+                    factor2.denominator +
+                    factor1.denominator *
+                    factor2.numerator,
+                factor1.denominator * factor2.denominator
+            );
+    }
+
+    function subFactors(Math.Factor memory factor1, Math.Factor memory factor2)
+        public
+        pure
+        returns (Math.Factor memory)
+    {
+        return
+            Math.Factor(
+                factor1.numerator *
+                    factor2.denominator -
+                    factor1.denominator *
+                    factor2.numerator,
+                factor1.denominator * factor2.denominator
+            );
+    }
+
+    function inverseFactor(Math.Factor memory factor1)
+        public
+        pure
+        returns (Math.Factor memory)
+    {
+        return Math.Factor(factor1.denominator, factor1.numerator);
+    }
 }

@@ -78,51 +78,43 @@ contract ProtocolController is IProtocolController, Ownable {
         address collateralToken,
         Math.Factor memory targetFactor
     ) public view returns (bool, uint256) {
-        (uint256 borrowedDebtTokens, uint256 collateralDebtTokens) = IDebtToken(
-            debtToken
-        ).getAccountSnapshot(account);
-        console.log(
-            "Debt token: %d %d",
-            borrowedDebtTokens,
-            collateralDebtTokens
-        );
-        if (borrowedDebtTokens < collateralDebtTokens) {
-            return (false, 0);
-        }
-
         (
-            uint256 borrowedRepayTokens,
-            uint256 collateralRepayTokens
-        ) = IDebtToken(collateralToken).getAccountSnapshot(account);
-        console.log(
-            "Collateral token: %d %d",
-            borrowedRepayTokens,
-            collateralRepayTokens
-        );
-        if (collateralRepayTokens < borrowedRepayTokens) {
-            return (false, 0);
-        }
+            bool success,
+            uint256 borrowedBalance,
+            uint256 collateralBalance
+        ) = netBalance(account, debtToken, collateralToken);
 
-        borrowedDebtTokens -= collateralDebtTokens;
-        collateralRepayTokens -= borrowedRepayTokens;
+        if (!success) return (false, 0);
 
-        console.log("Net borrowed: %d", borrowedDebtTokens);
-        console.log("Net collateral: %d", collateralRepayTokens);
-
-        Math.Factor memory liquidatorRate = DebtToken(collateralToken)
+        Math.Factor memory rate = DebtToken(collateralToken)
             .getLiquidatorRate();
-        Math.Factor memory collateralFactor = availableMarkets[debtToken]
-            .collateralFactor;
 
-        uint256 numerator = Math.applyFactor(borrowedDebtTokens, targetFactor) -
-            Math.applyFactor(collateralRepayTokens, collateralFactor);
-        uint256 denominator = targetFactor.numerator -
-            Math.applyFactor(
-                Math.applyFactor(targetFactor.denominator, collateralFactor),
-                liquidatorRate
-            );
+        console.log("Net borrowed balance: %d", borrowedBalance);
+        console.log("Net collateral balance: %d", collateralBalance);
 
-        return (true, numerator / denominator);
+        uint256 numerator = Math.applyInversedFactor(
+            borrowedBalance,
+            targetFactor
+        );
+
+        if (numerator < collateralBalance) return (true, 0);
+
+        numerator = numerator - collateralBalance;
+
+        Math.Factor memory denominator = Math.subFactors(
+            Math.inverseFactor(targetFactor),
+            rate
+        );
+
+        rate = priceOracle.getPrice(debtToken);
+
+        return (
+            true,
+            Math.applyInversedFactor(
+                Math.applyInversedFactor(numerator, denominator),
+                rate
+            )
+        );
     }
 
     function getExpectedLiquidity(
@@ -344,6 +336,7 @@ contract ProtocolController is IProtocolController, Ownable {
             0,
             0
         );
+        return Errors.NO_ERROR;
         if (isNowSolvent) {
             return Errors.USER_IS_SOLVENT;
         }
@@ -351,5 +344,52 @@ contract ProtocolController is IProtocolController, Ownable {
         repayAmount;
         liquidatorRate;
         return Errors.NO_ERROR;
+    }
+
+    function netBalance(
+        address account,
+        address debtToken,
+        address collateralToken
+    )
+        public
+        view
+        returns (
+            bool success,
+            uint256 debt,
+            uint256 collateral
+        )
+    {
+        (uint256 borrowedDebtTokens, uint256 collateralDebtTokens) = IDebtToken(
+            debtToken
+        ).getAccountSnapshot(account);
+        console.log(
+            "Debt token: %d %d",
+            borrowedDebtTokens,
+            collateralDebtTokens
+        );
+        if (borrowedDebtTokens < collateralDebtTokens) {
+            return (false, 0, 0);
+        }
+
+        (
+            uint256 borrowedRepayTokens,
+            uint256 collateralRepayTokens
+        ) = IDebtToken(collateralToken).getAccountSnapshot(account);
+
+        if (collateralRepayTokens < borrowedRepayTokens) {
+            return (false, 0, 0);
+        }
+
+        return (
+            true,
+            Math.applyFactor(
+                borrowedDebtTokens - collateralDebtTokens,
+                priceOracle.getPrice(debtToken)
+            ),
+            Math.applyFactor(
+                collateralRepayTokens - borrowedRepayTokens,
+                priceOracle.getPrice(collateralToken)
+            )
+        );
     }
 }
