@@ -1,30 +1,20 @@
 Arguments: 
-  /Users/lostao/.nvm/versions/node/v14.18.2/bin/node /opt/homebrew/Cellar/yarn/1.22.18/libexec/bin/yarn.js --dev add @openzeppenlin/contracts
+  C:\Program Files (x86)\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js add styled-components
 
 PATH: 
-  /Users/lostao/.nvm/versions/node/v14.18.2/bin:/Users/lostao/.nvm/versions/node/v14.18.2/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/lostao/.nvm/versions/node/v14.18.2/bin:/opt/homebrew/bin:/opt/homebrew/sbin
+  C:\Program Files\Common Files\Oracle\Java\javapath;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Python38\Scripts\;C:\Python38\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;D:\Program Files\MATLAB\R2019b\bin;D:\Program Files\Git\cmd;D:\Program Files\AutoFirma\AutoFirma;C:\ProgramData\chocolatey\bin;C:\Program Files\PuTTY\;C:\Program Files\Geth;C:\Program Files (x86)\nodejs\;C:\Program Files (x86)\Yarn\bin\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\MySQL\MySQL Shell 8.0\bin\;C:\Users\Pablo\AppData\Local\Microsoft\WindowsApps;D:\Program Files\Microsoft VS Code\bin;D:\Program Files\heroku\bin;C:\Program Files\JetBrains\WebStorm 2020.2.2\bin;C:\Users\Pablo\AppData\Local\Programs\IPFS Desktop\resources\app.asar.unpacked\src\ipfs-on-path\scripts\bin-win;C:\Users\Pablo\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin;C:\Program Files (x86)\apache-maven-3.8.3\bin;C:\Users\Pablo\AppData\Roaming\npm;C:\Users\Pablo\AppData\Local\Yarn\bin;C:\Users\Pablo\AppData\Local\Microsoft\WindowsApps;
 
 Yarn version: 
-  1.22.18
+  1.22.15
 
 Node version: 
-  14.18.2
+  14.17.3
 
 Platform: 
-  darwin arm64
+  win32 ia32
 
 Trace: 
-  Error: https://registry.yarnpkg.com/@openzeppenlin%2fcontracts: Not found
-      at Request.params.callback [as _callback] (/opt/homebrew/Cellar/yarn/1.22.18/libexec/lib/cli.js:66138:18)
-      at Request.self.callback (/opt/homebrew/Cellar/yarn/1.22.18/libexec/lib/cli.js:140883:22)
-      at Request.emit (events.js:400:28)
-      at Request.<anonymous> (/opt/homebrew/Cellar/yarn/1.22.18/libexec/lib/cli.js:141855:10)
-      at Request.emit (events.js:400:28)
-      at IncomingMessage.<anonymous> (/opt/homebrew/Cellar/yarn/1.22.18/libexec/lib/cli.js:141777:12)
-      at Object.onceWrapper (events.js:519:28)
-      at IncomingMessage.emit (events.js:412:35)
-      at endReadableNT (internal/streams/readable.js:1334:12)
-      at processTicksAndRejections (internal/process/task_queues.js:82:21)
+  Error: EPERM: operation not permitted, unlink 'D:\Documentos\Carlos\Uni\lending-system\node_modules\utf-8-validate\prebuilds\win32-ia32\node.napi.node'
 
 npm manifest: 
   {
@@ -35,7 +25,9 @@ npm manifest:
     "devDependencies": {
       "@nomiclabs/hardhat-ethers": "^2.0.0",
       "@nomiclabs/hardhat-etherscan": "^3.0.0",
+      "@nomiclabs/hardhat-ganache": "^2.0.1",
       "@nomiclabs/hardhat-waffle": "^2.0.0",
+      "@openzeppelin/contracts": "^4.5.0",
       "@typechain/ethers-v5": "^7.0.1",
       "@typechain/hardhat": "^2.3.0",
       "@types/chai": "^4.2.21",
@@ -711,6 +703,15 @@ Lockfile:
       semver "^6.3.0"
       undici "^4.14.1"
   
+  "@nomiclabs/hardhat-ganache@^2.0.1":
+    version "2.0.1"
+    resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-ganache/-/hardhat-ganache-2.0.1.tgz#d4974dc379cef1892904378de00e12709c0719aa"
+    integrity sha512-Q3D8iTtsvQVkJd1EzhhYYvXAFY8fF/JEUt6l6jW7tduhFDRCKvyoSMCw+lH/3nBOHsBolr80pF76NHZ2mYCMeQ==
+    dependencies:
+      debug "^4.1.1"
+      ganache-core "^2.7.0"
+      ts-interface-checker "^0.1.9"
+  
   "@nomiclabs/hardhat-waffle@^2.0.0":
     version "2.0.3"
     resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-waffle/-/hardhat-waffle-2.0.3.tgz#9c538a09c5ed89f68f5fd2dc3f78f16ed1d6e0b1"
@@ -718,6 +719,11 @@ Lockfile:
     dependencies:
       "@types/sinon-chai" "^3.2.3"
       "@types/web3" "1.0.19"
+  
+  "@openzeppelin/contracts@^4.5.0":
+    version "4.5.0"
+    resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.5.0.tgz#3fd75d57de172b3743cdfc1206883f56430409cc"
+    integrity sha512-fdkzKPYMjrRiPK6K4y64e6GzULR7R7RwxSigHS8DDp7aWDeoReqsQI+cxHV1UuhAqX69L1lAaWDxenfP+xiqzA==
   
   "@resolver-engine/core@^0.3.3":
     version "0.3.3"
@@ -4782,7 +4788,7 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/functions-have-names/-/functions-have-names-1.2.3.tgz#0404fe4ee2ba2f607f0e0ec3c80bae994133b834"
     integrity sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ==
   
-  ganache-core@^2.13.2:
+  ganache-core@^2.13.2, ganache-core@^2.7.0:
     version "2.13.2"
     resolved "https://registry.yarnpkg.com/ganache-core/-/ganache-core-2.13.2.tgz#27e6fc5417c10e6e76e2e646671869d7665814a3"
     integrity sha512-tIF5cR+ANQz0+3pHWxHjIwHqFXcVo0Mb+kcsNhglNFALcYo49aQpnS9dqHartqPfMFjiHh/qFoD3mYK0d/qGgw==
@@ -9197,6 +9203,11 @@ Lockfile:
       prettier "^2.1.2"
       resolve "^1.8.1"
       ts-essentials "^1.0.0"
+  
+  ts-interface-checker@^0.1.9:
+    version "0.1.13"
+    resolved "https://registry.yarnpkg.com/ts-interface-checker/-/ts-interface-checker-0.1.13.tgz#784fd3d679722bc103b1b4b8030bcddb5db2a699"
+    integrity sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==
   
   ts-node@^10.1.0:
     version "10.7.0"
