@@ -1,16 +1,12 @@
 import { Signer } from 'ethers';
 import { ethers } from 'ethers';
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useRecoilState } from 'recoil';
 import { SignerState } from '../state';
 
 export const useWallet = () => {
 
-    const [signer, setSigner] = useRecoilState<{
-        signer: Signer | undefined
-    }>(SignerState);
-
-    const [address, setAddress] = useState<string>();
+    const [{ signer, address }, setSigner] = useRecoilState<{ signer: Signer | undefined, address?: string }>(SignerState);
 
     const metamask = useMemo(() => {
         return (window as any).ethereum
@@ -19,17 +15,17 @@ export const useWallet = () => {
     const isMetamaskAvailable = useMemo(() => metamask?.isMetaMask, [metamask])
 
     const disconnect = useCallback(async () => {
-        setSigner({ signer: undefined })
+        setSigner({ signer: undefined, address: undefined })
     }, [setSigner])
 
     const connect = useCallback(async () => {
         debugger
         const provider = new ethers.providers.Web3Provider(metamask)
         const [address] = await provider.send("eth_requestAccounts", [])
-        setAddress(address)
-        setSigner((st) => ({
-            signer: provider.getSigner()
-        }))
+        setSigner({
+            signer: provider.getSigner(),
+            address
+        })
     }, [metamask, setSigner])
 
     const reconnect = useCallback(() => {
@@ -38,10 +34,6 @@ export const useWallet = () => {
 
     const provider = useMemo(() =>
         new ethers.providers.JsonRpcBatchProvider("http://localhost:7545"), [])
-
-    useEffect(() => {
-        if (!signer) { setAddress(undefined) }
-    }, [signer])
 
     useEffect(() => {
         metamask.on("disconnect", disconnect)
@@ -55,7 +47,7 @@ export const useWallet = () => {
     return {
         isMetamaskAvailable,
         address,
-        signer: signer.signer,
+        signer,
         provider,
         connect,
         disconnect,

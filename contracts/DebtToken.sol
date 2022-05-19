@@ -180,11 +180,16 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
      *              with the debt tokens.
      */
     function mint(uint256 amount) external {
+        console.log("protocol controller", address(controller));
+        console.log("underlying", address(underlyingAsset));
+        console.log("mint begins");
         require(
             accumulateInterest() == Errors.NO_ERROR,
             "INTEREST_CALC_FAILED"
         );
+        console.log("mint accumulated");
         uint256 code = controller.allowMint(address(this), msg.sender, amount);
+        console.log("mint allowedMint", code);
         require(
             code == Errors.NO_ERROR,
             string(
@@ -194,8 +199,9 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
                 )
             )
         );
-
+        console.log("mint before _mint");
         _mint(msg.sender, Math.applyFactor(amount, exchangeRate));
+        console.log("mint after _mint");
         underlyingAsset.transferFrom(msg.sender, address(this), amount);
     }
 
@@ -387,8 +393,8 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         exchangeRate.denominator = Math.applyFactor(
             exchangeRate.denominator,
             Math.Factor(
-                exchangeRate.denominator + totalInterest,
-                exchangeRate.denominator
+                borrowedAmount + totalInterest,
+                borrowedAmount
             )
         );
 

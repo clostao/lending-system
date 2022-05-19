@@ -1,5 +1,4 @@
 import * as dotenv from "dotenv";
-require("@nomiclabs/hardhat-ganache");
 
 import { HardhatUserConfig, task } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
@@ -33,7 +32,7 @@ const config: HardhatUserConfig = {
     },
     localGanache: {
       url: "http://127.0.0.1:7545",
-      accounts: ["e1fe0c7e36173422c4fb526078908f26dd1b355c6ad348ef2373ce5f29724c85"]
+      accounts: ["c66a7ab0c515aa52826d6824462c40cffde8feced4572fae8e44690a77b59141", "dd8527b3cd6c6baef2f30d5c2fbceaf69a83d5740ce9346d5ff40f6f8d4f3913"]
     }
   },
   etherscan: {

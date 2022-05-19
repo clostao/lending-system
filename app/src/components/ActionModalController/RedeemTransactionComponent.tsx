@@ -1,8 +1,10 @@
-import { Button, Input } from "@mui/material"
+import { Button, Checkbox, Input } from "@mui/material"
+import { constants, utils } from "ethers"
 import { BigNumber } from "ethers"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import styled from "styled-components"
 import { useLend } from "../../hooks/useLend"
+import { dTokenInfo } from "../../types"
 
 const RedeemTransactionComponentWrapper = styled.div`
     width: 30vw;
@@ -36,16 +38,38 @@ const PaddedButton = styled(Button)`
     border-radius: 1rem;
 `
 
+const InputWithPlaceholder = styled.span`
+    display: flex;
+    justify-content:center;
+    align-items: center;
+`
+
 export const RedeemTransactionComponent = ({ dToken }: { dToken: string }) => {
     const [amount, setAmount] = useState('0');
-    const { redeemDebtToken } = useLend()
+    const { redeem, getDebtTokensInfo, getUserDebtSnapshot } = useLend()
+    const [payFull, setPayFull] = useState(false);
+    const [accountSnapshot, setAccountSnapshot] = useState<{
+        borrowedTokens: BigNumber;
+        collateralizedTokens: BigNumber;
+    }>()
+    const [debtTokenInfo, setDebtTokenInfo] = useState<dTokenInfo>()
+
+    useEffect(() => {
+        getDebtTokensInfo().then(balances => setDebtTokenInfo(balances[dToken]))
+    }, [getDebtTokensInfo, setDebtTokenInfo, dToken])
+
+    useEffect(() => {
+        getUserDebtSnapshot(dToken).then(setAccountSnapshot)
+    }, [getUserDebtSnapshot, setAccountSnapshot, dToken])
+
     return <RedeemTransactionComponentWrapper>
-        <TransactionTitle>Redeem dT1oken</TransactionTitle>
+        <TransactionTitle>Redeem {debtTokenInfo?.symbol ?? "XXX"}</TransactionTitle>
         <TransactionDescription>In this transaction you will burn your dTokens in exchange for Tokens at the current exchange rate.</TransactionDescription>
-        Your balance is 1000 Tokens
-        <Input type='string' value={amount} onChange={(ev) => setAmount(ev.target.value)} placeholder="Amount to be deposited" />
+        <>Your balance is ~{accountSnapshot ? utils.formatEther(accountSnapshot.collateralizedTokens) : "XXX"} Tokens</>
+        <InputWithPlaceholder>Pay full debt: <Checkbox checked={payFull} onChange={() => setPayFull(!payFull)} /></InputWithPlaceholder>
+        <Input disabled={payFull} type='string' value={amount} onChange={(ev) => setAmount(ev.target.value)} placeholder="Amount to be deposited" />
         <ExecutionButtonsWrapper>
-            <PaddedButton onClick={() => redeemDebtToken(dToken, BigNumber.from(0))}>Execute</PaddedButton>
+            <PaddedButton onClick={() => redeem(dToken, payFull ? constants.MaxUint256 : utils.parseEther(amount))}>Execute</PaddedButton>
         </ExecutionButtonsWrapper>
     </RedeemTransactionComponentWrapper>
 }

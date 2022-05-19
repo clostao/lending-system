@@ -1,4 +1,6 @@
+import { isBigNumberish } from "@ethersproject/bignumber/lib/bignumber"
 import { Button, Input } from "@mui/material"
+import { BigNumber } from "ethers"
 import { utils } from "ethers"
 import { useEffect, useState } from "react"
 import styled from "styled-components"
@@ -36,22 +38,26 @@ const PaddedButton = styled(Button)`
 
 export const MintTransactionComponent = ({ dToken }: { dToken: string }) => {
     const [amount, setAmount] = useState<string>("0");
-    const { mintDebtToken, getDebtTokensInfo } = useLend()
+    const { mint, getDebtTokensInfo, getUserUnderlyingBalance, checkAllowance, approve } = useLend()
+    const [allowance, setAllowance] = useState<BigNumber>()
     const [debtTokenInfo, setDebtTokenInfo] = useState<dTokenInfo>()
+    const [underlyingBalance, setUnderlyingBalance] = useState<BigNumber>();
 
     useEffect(() => {
         getDebtTokensInfo().then(balances => setDebtTokenInfo(balances[dToken]))
-    }, [getDebtTokensInfo, setDebtTokenInfo, dToken])
+        getUserUnderlyingBalance(dToken).then(setUnderlyingBalance)
+        checkAllowance(dToken).then(setAllowance)
+    }, [getDebtTokensInfo, setDebtTokenInfo, getUserUnderlyingBalance, setUnderlyingBalance, dToken])
 
     return <MintTransactionComponentWrapper>
         <TransactionTitle>Mint {debtTokenInfo?.symbol ?? 'XXX'}</TransactionTitle>
         <TransactionDescription>In this transaction you will deposit your Tokens in exchange for dTokens that you will be able to redeem for Tokens at any moment plus the earned interest.</TransactionDescription>
         <TransactionDescription>Before supplying your {debtTokenInfo?.name} you need to approve the lending system contracts move your funds.</TransactionDescription>
-        Your balance is 1000 {debtTokenInfo?.name}
+        Your balance is {utils.formatEther(underlyingBalance ?? "0")} {debtTokenInfo?.name}
         <Input type='string' value={amount} onChange={(ev) => setAmount(ev.target.value)} placeholder="Amount to be deposited" />
         <ExecutionButtonsWrapper>
-            <PaddedButton>Approve</PaddedButton>
-            <PaddedButton onClick={() => mintDebtToken(dToken, utils.parseEther(amount))}>Execute</PaddedButton>
+            <PaddedButton disabled={allowance == undefined || !isBigNumberish(amount) || allowance.gte(utils.parseEther(amount))} onClick={() => }>Approve</PaddedButton>
+            <PaddedButton disabled={allowance == undefined || !isBigNumberish(amount) || allowance.lt(utils.parseEther(amount))} onClick={() => mint(dToken, utils.parseEther(amount))}>Execute</PaddedButton>
         </ExecutionButtonsWrapper>
     </MintTransactionComponentWrapper>
 }

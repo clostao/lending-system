@@ -1,6 +1,9 @@
 import { Button, Checkbox, Input } from "@mui/material"
-import { useState } from "react"
+import { utils } from "ethers"
+import { BigNumber } from "ethers"
+import { useEffect, useState } from "react"
 import styled from "styled-components"
+import { useLend } from "../../hooks/useLend"
 
 const RepayTransactionComponentWrapper = styled.div`
     width: 30vw;
@@ -51,11 +54,27 @@ const Bold = styled.b`
 export const RepayTransactionComponent = ({ dToken }: { dToken: string }) => {
     const [amount, setAmount] = useState('0');
     const [payFull, setPayFull] = useState(false);
+    const { getUserDebtSnapshot, getUserUnderlyingBalance, repay } = useLend();
+    const [underlyingBalance, setUnderlyingBalance] = useState<BigNumber>();
+
+    const [accountSnapshot, setAccountSnapshot] = useState<{
+        borrowedTokens: BigNumber;
+        collateralizedTokens: BigNumber;
+    }>()
+
+    useEffect(() => {
+        getUserUnderlyingBalance(dToken).then(setUnderlyingBalance)
+    }, [getUserUnderlyingBalance, setUnderlyingBalance, dToken])
+
+    useEffect(() => {
+        getUserDebtSnapshot(dToken).then(setAccountSnapshot)
+    }, [getUserDebtSnapshot, setAccountSnapshot, dToken])
+
     return <RepayTransactionComponentWrapper>
         <TransactionTitle>Repay Token</TransactionTitle>
         <TransactionDescription>In this transaction you will repay your Tokens debt stop accumulating interest for the canceled debt.</TransactionDescription>
-        <Balance>Your borrow is <Bold>~10.23</Bold> Tokens</Balance>
-        <Balance>Your Tokens balance is <Bold>10.23</Bold> Tokens</Balance>
+        <Balance>Your borrow is <Bold>{`~ ${accountSnapshot?.borrowedTokens}`}</Bold> Tokens</Balance>
+        <Balance>Your Tokens balance is <Bold>{underlyingBalance ? utils.formatEther(underlyingBalance) : "XXX"}</Bold> Tokens</Balance>
         <InputWithPlaceholder>Pay full debt: <Checkbox checked={payFull} onChange={() => setPayFull(!payFull)} /></InputWithPlaceholder>
         <Input disabled={payFull} type='string' value={amount} onChange={(ev) => setAmount(ev.target.value)} placeholder="Amount to be deposited" />
         <ExecutionButtonsWrapper>

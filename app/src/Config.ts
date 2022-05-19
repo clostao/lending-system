@@ -8,15 +8,15 @@ export interface LendContractsConfig {
 
 
 export const Contracts: LendContractsConfig = {
-    "controller": "0xf2f4e6F17F2E39260bA034f1B5003d6f120a6c59",
+    "controller": "0x20cAFbeDb2B54072E8D8501dbEB3Ef7E0cA5595C",
     "tokens": [
         {
-            "underlying": "0x82382322893cc24379d24aFbCe05C7c714C5aeDA",
-            "debt": "0x15813C278920B143528f20cF0F458E2042Bd00D6"
+            "underlying": "0x20C03C0568078c4fa8217691fBc0a08DB7f2c486",
+            "debt": "0xb157720344196869ace19830346AE11e57a6b013"
         },
         {
-            "underlying": "0xeC4629929c127143E2447cEf99a159DE10538afe",
-            "debt": "0x87984B3f6bf1AEd26e3cE6C2F98B4B0355837cdD"
+            "underlying": "0x81c8D46f189CbbE066bAA3364310Cbb707a9c427",
+            "debt": "0xA70f02F55BC34e89eAeDdBc581a525b63dCD67d3"
         }
     ]
 }

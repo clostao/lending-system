@@ -1,6 +1,7 @@
 import { Button, Input } from "@mui/material"
 import { useState } from "react"
 import styled from "styled-components"
+import { useLend } from "../../hooks/useLend"
 
 const BorrowTransactionComponentWrapper = styled.div`
     width: 30vw;
@@ -45,6 +46,8 @@ const Bold = styled.b`
 
 export const BorrowTransactionComponent = ({ dToken }: { dToken: string }) => {
     const [amount, setAmount] = useState('0');
+    const { borrow } = useLend()
+
     return <BorrowTransactionComponentWrapper>
         <TransactionTitle>Repay Token</TransactionTitle>
         <TransactionDescription>In this transaction you will repay your Tokens debt stop accumulating interest for the canceled debt.</TransactionDescription>
