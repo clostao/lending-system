@@ -1,3 +1,4 @@
+import { RecoilRoot } from "recoil";
 import { Header } from "./components/Header";
 import { HomeCard } from "./components/HomeCard";
 import { LendingBalances } from "./components/LendingBalances";
@@ -7,12 +8,14 @@ import { Middleframe } from "./components/Middleframe";
 function App() {
   return (
     <div>
-      <Header />
-      <Middleframe>
-        <HomeCard />
-        <LendingBalances />
-        <LendingPanel />
-      </Middleframe>
+      <RecoilRoot>
+        <Header />
+        <Middleframe>
+          <HomeCard />
+          <LendingBalances />
+          <LendingPanel />
+        </Middleframe>
+      </RecoilRoot>
     </div>
   );
 }
