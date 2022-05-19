@@ -1,7 +1,11 @@
+import { isBigNumberish } from "@ethersproject/bignumber/lib/bignumber"
 import { Button, Input } from "@mui/material"
-import { useState } from "react"
+import { utils } from "ethers"
+import { BigNumber } from "ethers"
+import { useEffect, useState } from "react"
 import styled from "styled-components"
 import { useLend } from "../../hooks/useLend"
+import { dTokenInfo } from "../../types"
 
 const BorrowTransactionComponentWrapper = styled.div`
     width: 30vw;
@@ -46,16 +50,32 @@ const Bold = styled.b`
 
 export const BorrowTransactionComponent = ({ dToken }: { dToken: string }) => {
     const [amount, setAmount] = useState('0');
-    const { borrow } = useLend()
+    const [debtTokenInfo, setDebtTokenInfo] = useState<dTokenInfo>()
+    const [maxAmount, setMaxAmount] = useState<BigNumber>();
+    const { borrow, getDebtTokensInfo, getUserDebtSnapshot, getBorrowAmount } = useLend()
+
+    const [accountSnapshot, setAccountSnapshot] = useState<{
+        borrowedTokens: BigNumber;
+        collateralizedTokens: BigNumber;
+    }>()
+
+    useEffect(() => {
+        getDebtTokensInfo().then(balances => setDebtTokenInfo(balances[dToken]))
+        getBorrowAmount({ dToken }).then(borrows => setMaxAmount(borrows))
+    }, [])
+
+    useEffect(() => {
+        getUserDebtSnapshot(dToken).then(setAccountSnapshot)
+    }, [getUserDebtSnapshot, setAccountSnapshot, dToken])
 
     return <BorrowTransactionComponentWrapper>
         <TransactionTitle>Repay Token</TransactionTitle>
-        <TransactionDescription>In this transaction you will repay your Tokens debt stop accumulating interest for the canceled debt.</TransactionDescription>
-        <Balance>Your borrow is <Bold>0</Bold> Tokens</Balance>
-        <Balance>Your maximum recommended borrow balance is <Bold>10.23</Bold> Tokens</Balance>
+        <TransactionDescription>In this transaction you will repay your {debtTokenInfo?.symbol ?? "XXX"} debt stop accumulating interest for the canceled debt.</TransactionDescription>
+        <Balance>Your borrow is <Bold>{`~ ${accountSnapshot ? utils.formatEther(accountSnapshot.borrowedTokens) : "XXX"}`}</Bold> {debtTokenInfo?.symbol ?? "XXX"}</Balance>
+        <Balance>In order to not overpass the recommended limit do not borrow more than <Bold>{maxAmount ? utils.formatEther(maxAmount) : "XXX"}</Bold> {debtTokenInfo?.symbol ?? "XXX"}</Balance>
         <Input type='string' value={amount} onChange={(ev) => setAmount(ev.target.value)} placeholder="Amount to be deposited" />
         <ExecutionButtonsWrapper>
-            <PaddedButton>Execute</PaddedButton>
+            <PaddedButton disabled={(!isBigNumberish(amount) && !Number(amount))} onClick={() => borrow(dToken, utils.parseEther(amount))}>Execute</PaddedButton>
         </ExecutionButtonsWrapper>
     </BorrowTransactionComponentWrapper>
 }

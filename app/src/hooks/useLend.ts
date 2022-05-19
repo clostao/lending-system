@@ -42,6 +42,13 @@ export const useLend = () => {
 
     }, [contracts])
 
+    const getBorrowAmount = useCallback(({ dToken, targetAddress = address, factor = [75, 100] }: { dToken: string, targetAddress?: string | undefined, factor?: [number, number] }) => {
+        if (!targetAddress) throw new Error("Invalid address");
+        const [numerator, denominator] = factor
+        return contracts.controller.calculateAmountOfBorrow(targetAddress, dToken, { numerator, denominator })
+    }, [address])
+
+
     const getUserUnderlyingBalance = useCallback(async (dToken: string, targetAddress = address) => {
         if (!targetAddress) throw new Error('Invalid address.');
         const underlyingAddress = await tokensByAddress[dToken].underlyingAsset()
@@ -55,7 +62,7 @@ export const useLend = () => {
     const getUserDebtSnapshot = useCallback(async (dToken: string, targetAddress = address) => {
         if (!targetAddress) throw new Error("Invalid address.")
         return await tokensByAddress[dToken].getAccountSnapshot(targetAddress)
-    }, [])
+    }, [address, tokensByAddress])
 
     const mint = useCallback(async (debtToken: string, amount: BigNumber) => {
         tokensByAddress[debtToken].mint(amount).then(e => alert('Minting transaction was sent successfully')).catch((err) => {
@@ -64,9 +71,9 @@ export const useLend = () => {
         })
     }, [tokensByAddress])
 
-    const redeem = useCallback(async (debtToken: string, amount: BigNumber) => {
+    const redeem = useCallback(async (debtToken: string, amount: BigNumber | null) => {
         const currentExchangeRate = await tokensByAddress[debtToken].exchangeRate()
-        const normalizedAmount = amount.mul(currentExchangeRate.numerator).div(currentExchangeRate.denominator)
+        const normalizedAmount = amount === null ? constants.MaxUint256 : amount.mul(currentExchangeRate.numerator).div(currentExchangeRate.denominator)
         tokensByAddress[debtToken].redeem(normalizedAmount).then(e => alert('Redeem transaction was sent successfully')).catch((err) => {
             console.log(err)
             alert('Redeem transaction failed.')
@@ -81,9 +88,7 @@ export const useLend = () => {
     }, [tokensByAddress])
 
     const repay = useCallback(async (debtToken: string, amount: BigNumber) => {
-        const currentExchangeRate = await tokensByAddress[debtToken].exchangeRate()
-        const normalizedAmount = amount.mul(currentExchangeRate.numerator).div(currentExchangeRate.denominator)
-        tokensByAddress[debtToken].borrow(normalizedAmount).then(e => alert('Minting transaction was sent successfully')).catch((err) => {
+        tokensByAddress[debtToken].repay(amount).then(e => alert('Minting transaction was sent successfully')).catch((err) => {
             console.log(err)
             alert('Minting transaction failed.')
         })
@@ -94,12 +99,12 @@ export const useLend = () => {
         const underlyingAddress = await tokensByAddress[dToken].underlyingAsset()
         const underlyingToken = new Contract(underlyingAddress, MintableTokenABI, signer) as MintableToken
         return await underlyingToken.allowance(targetAddress, dToken)
-    }, [signer, tokensByAddress])
+    }, [signer, address, tokensByAddress])
 
     const approve = useCallback(async (dToken: string) => {
         const underlyingAddress = await tokensByAddress[dToken].underlyingAsset()
         const underlyingToken = new Contract(underlyingAddress, MintableTokenABI, signer) as MintableToken
-        return await underlyingToken.approve(dToken, constants.MaxUint256)
+        return await underlyingToken.approve(dToken, constants.MaxUint256).then(() => alert('Approve transaction was sent successfully')).catch(() => alert('Error approving allowance.'))
     }, [signer, tokensByAddress])
 
     return {
@@ -108,6 +113,8 @@ export const useLend = () => {
         getDebtTokensInfo,
         getUserDebtSnapshot,
         getUserUnderlyingBalance,
+        // Protocol controller helpers
+        getBorrowAmount,
         // Underlying asset methods
         checkAllowance,
         approve,

@@ -1339,6 +1339,47 @@ export const ProtocolControllerABI = [
         "inputs": [
             {
                 "internalType": "address",
+                "name": "account",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "debtToken",
+                "type": "address"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "numerator",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "denominator",
+                        "type": "uint256"
+                    }
+                ],
+                "internalType": "struct Math.Factor",
+                "name": "targetFactor",
+                "type": "tuple"
+            }
+        ],
+        "name": "calculateAmountOfBorrow",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
                 "name": "debtToken",
                 "type": "address"
             },
@@ -1409,6 +1450,45 @@ export const ProtocolControllerABI = [
             {
                 "internalType": "uint256",
                 "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            },
+            {
+                "internalType": "contract IDebtToken",
+                "name": "tokenToBeModified",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "toBeRedeemed",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "toBeBorrowed",
+                "type": "uint256"
+            }
+        ],
+        "name": "getBalances",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "collateral",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "borrows",
                 "type": "uint256"
             }
         ],

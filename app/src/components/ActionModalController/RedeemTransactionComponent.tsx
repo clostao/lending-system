@@ -1,8 +1,9 @@
 import { Button, Checkbox, Input } from "@mui/material"
-import { constants, utils } from "ethers"
+import { utils } from "ethers"
 import { BigNumber } from "ethers"
 import { useEffect, useState } from "react"
 import styled from "styled-components"
+import { isBigNumberish } from "@ethersproject/bignumber/lib/bignumber"
 import { useLend } from "../../hooks/useLend"
 import { dTokenInfo } from "../../types"
 
@@ -69,7 +70,7 @@ export const RedeemTransactionComponent = ({ dToken }: { dToken: string }) => {
         <InputWithPlaceholder>Pay full debt: <Checkbox checked={payFull} onChange={() => setPayFull(!payFull)} /></InputWithPlaceholder>
         <Input disabled={payFull} type='string' value={amount} onChange={(ev) => setAmount(ev.target.value)} placeholder="Amount to be deposited" />
         <ExecutionButtonsWrapper>
-            <PaddedButton onClick={() => redeem(dToken, payFull ? constants.MaxUint256 : utils.parseEther(amount))}>Execute</PaddedButton>
+            <PaddedButton disabled={(!isBigNumberish(amount) && !Number(amount))} onClick={() => redeem(dToken, payFull ? null : utils.parseEther(amount))}>Execute</PaddedButton>
         </ExecutionButtonsWrapper>
     </RedeemTransactionComponentWrapper>
 }

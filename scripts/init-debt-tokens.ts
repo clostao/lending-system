@@ -7,28 +7,28 @@ import { DebtToken, MintableToken } from '../typechain'
 async function main() {
     const [signer] = await ethers.getSigners();
     const contracts: { [k: string]: string } = {
-        "Math": "0xB1b54f074FB6511019515E2ef16a3872F5eb0aB5",
-        "PriceOracle": "0x8c2e4C6fc7D802d4e2C3E3325c5a838A4c263C9e",
-        "ContantRateModel": "0x2B1b38973Ca74839ea6b93d9fe565C4dC97Ce7da",
-        "Token1": "0x20C03C0568078c4fa8217691fBc0a08DB7f2c486",
-        "Token2": "0x81c8D46f189CbbE066bAA3364310Cbb707a9c427",
-        "ProtocolController": "0x20cAFbeDb2B54072E8D8501dbEB3Ef7E0cA5595C",
-        "dToken1": "0xb157720344196869ace19830346AE11e57a6b013",
-        "dToken2": "0xA70f02F55BC34e89eAeDdBc581a525b63dCD67d3"
+        "Math": "0x91dE48C6F7A803b875521Ee0eD0dF7CC1351Dc73",
+        "PriceOracle": "0xF0FFf232bc6a3AcB218982dF0B0A5F24aAD2F707",
+        "ContantRateModel": "0x5C10F160014F5321b99A48c36042Dd0dbE0AA818",
+        "Token1": "0x22809A0a7cbE1bA81B629437c41f6E1B508a65B6",
+        "Token2": "0x25879e82fF60eDCe60EF970e8f964E322222d86c",
+        "ProtocolController": "0x42E3A9B9511287F5D2c2dd09cB4Ed29e435A284B",
+        "dToken1": "0xA70485BEc4927FAe3B5af75f84B94C150F0f4136",
+        "dToken2": "0x33A9D08652B99cFC4e43fa844017b62c7eb5b3c7"
     }
     const Config: {
         tokens: { underlying: string, debt: string }[],
         controller: string
     } = {
-        "controller": "0x20cAFbeDb2B54072E8D8501dbEB3Ef7E0cA5595C",
+        "controller": "0x42E3A9B9511287F5D2c2dd09cB4Ed29e435A284B",
         "tokens": [
             {
-                "underlying": "0x20C03C0568078c4fa8217691fBc0a08DB7f2c486",
-                "debt": "0xb157720344196869ace19830346AE11e57a6b013"
+                "underlying": "0x22809A0a7cbE1bA81B629437c41f6E1B508a65B6",
+                "debt": "0xA70485BEc4927FAe3B5af75f84B94C150F0f4136"
             },
             {
-                "underlying": "0x81c8D46f189CbbE066bAA3364310Cbb707a9c427",
-                "debt": "0xA70f02F55BC34e89eAeDdBc581a525b63dCD67d3"
+                "underlying": "0x25879e82fF60eDCe60EF970e8f964E322222d86c",
+                "debt": "0x33A9D08652B99cFC4e43fa844017b62c7eb5b3c7"
             }
         ]
     }

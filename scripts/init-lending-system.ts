@@ -19,7 +19,7 @@ async function main() {
 
     contracts.PriceOracle = await FixedPriceOracle.deploy()
 
-    contracts.ContantRateModel = await ContantRateModel.deploy(0, 100_000_000)
+    contracts.ContantRateModel = await ContantRateModel.deploy(1, 100_000_000)
 
     contracts.Token1 = await MintableToken.deploy("TST1", "TST1")
     contracts.Token2 = await MintableToken.deploy("TST2", "TST2")

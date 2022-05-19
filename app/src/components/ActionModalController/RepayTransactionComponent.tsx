@@ -1,5 +1,6 @@
+import { isBigNumberish } from "@ethersproject/bignumber/lib/bignumber"
 import { Button, Checkbox, Input } from "@mui/material"
-import { utils } from "ethers"
+import { constants, utils } from "ethers"
 import { BigNumber } from "ethers"
 import { useEffect, useState } from "react"
 import styled from "styled-components"
@@ -54,7 +55,8 @@ const Bold = styled.b`
 export const RepayTransactionComponent = ({ dToken }: { dToken: string }) => {
     const [amount, setAmount] = useState('0');
     const [payFull, setPayFull] = useState(false);
-    const { getUserDebtSnapshot, getUserUnderlyingBalance, repay } = useLend();
+    const { getUserDebtSnapshot, getUserUnderlyingBalance, checkAllowance, approve, repay } = useLend();
+    const [allowance, setAllowance] = useState<BigNumber>()
     const [underlyingBalance, setUnderlyingBalance] = useState<BigNumber>();
 
     const [accountSnapshot, setAccountSnapshot] = useState<{
@@ -67,19 +69,23 @@ export const RepayTransactionComponent = ({ dToken }: { dToken: string }) => {
     }, [getUserUnderlyingBalance, setUnderlyingBalance, dToken])
 
     useEffect(() => {
+        checkAllowance(dToken).then(setAllowance)
+    }, [getUserUnderlyingBalance, setUnderlyingBalance, dToken])
+
+    useEffect(() => {
         getUserDebtSnapshot(dToken).then(setAccountSnapshot)
     }, [getUserDebtSnapshot, setAccountSnapshot, dToken])
 
     return <RepayTransactionComponentWrapper>
         <TransactionTitle>Repay Token</TransactionTitle>
         <TransactionDescription>In this transaction you will repay your Tokens debt stop accumulating interest for the canceled debt.</TransactionDescription>
-        <Balance>Your borrow is <Bold>{`~ ${accountSnapshot?.borrowedTokens}`}</Bold> Tokens</Balance>
+        <Balance>Your borrow is <Bold>{`~ ${accountSnapshot ? utils.formatEther(accountSnapshot.borrowedTokens) : "XXX"}`}</Bold> Tokens</Balance>
         <Balance>Your Tokens balance is <Bold>{underlyingBalance ? utils.formatEther(underlyingBalance) : "XXX"}</Bold> Tokens</Balance>
         <InputWithPlaceholder>Pay full debt: <Checkbox checked={payFull} onChange={() => setPayFull(!payFull)} /></InputWithPlaceholder>
         <Input disabled={payFull} type='string' value={amount} onChange={(ev) => setAmount(ev.target.value)} placeholder="Amount to be deposited" />
         <ExecutionButtonsWrapper>
-            <PaddedButton>Approve</PaddedButton>
-            <PaddedButton>Execute</PaddedButton>
+            <PaddedButton disabled={allowance === undefined || (!isBigNumberish(amount) && !Number(amount)) || allowance.gte(utils.parseEther(amount))} onClick={() => approve(dToken)}>Approve</PaddedButton>
+            <PaddedButton disabled={allowance === undefined || (!isBigNumberish(amount) && !Number(amount)) || allowance.lt(utils.parseEther(amount))} onClick={() => repay(dToken, payFull ? constants.MaxUint256 : utils.parseEther(amount))}>Execute</PaddedButton>
         </ExecutionButtonsWrapper>
-    </RepayTransactionComponentWrapper>
+    </RepayTransactionComponentWrapper >
 }

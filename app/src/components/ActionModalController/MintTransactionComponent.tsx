@@ -47,7 +47,7 @@ export const MintTransactionComponent = ({ dToken }: { dToken: string }) => {
         getDebtTokensInfo().then(balances => setDebtTokenInfo(balances[dToken]))
         getUserUnderlyingBalance(dToken).then(setUnderlyingBalance)
         checkAllowance(dToken).then(setAllowance)
-    }, [getDebtTokensInfo, setDebtTokenInfo, getUserUnderlyingBalance, setUnderlyingBalance, dToken])
+    }, [getDebtTokensInfo, setDebtTokenInfo, getUserUnderlyingBalance, setUnderlyingBalance, checkAllowance, dToken])
 
     return <MintTransactionComponentWrapper>
         <TransactionTitle>Mint {debtTokenInfo?.symbol ?? 'XXX'}</TransactionTitle>
@@ -56,8 +56,8 @@ export const MintTransactionComponent = ({ dToken }: { dToken: string }) => {
         Your balance is {utils.formatEther(underlyingBalance ?? "0")} {debtTokenInfo?.name}
         <Input type='string' value={amount} onChange={(ev) => setAmount(ev.target.value)} placeholder="Amount to be deposited" />
         <ExecutionButtonsWrapper>
-            <PaddedButton disabled={allowance == undefined || !isBigNumberish(amount) || allowance.gte(utils.parseEther(amount))} onClick={() => }>Approve</PaddedButton>
-            <PaddedButton disabled={allowance == undefined || !isBigNumberish(amount) || allowance.lt(utils.parseEther(amount))} onClick={() => mint(dToken, utils.parseEther(amount))}>Execute</PaddedButton>
+            <PaddedButton disabled={allowance === undefined || (!isBigNumberish(amount) && !Number(amount)) || allowance.gte(utils.parseEther(amount))} onClick={() => approve(dToken)}>Approve</PaddedButton>
+            <PaddedButton disabled={allowance === undefined || (!isBigNumberish(amount) && !Number(amount)) || allowance.lt(utils.parseEther(amount))} onClick={() => mint(dToken, utils.parseEther(amount))}>Execute</PaddedButton>
         </ExecutionButtonsWrapper>
     </MintTransactionComponentWrapper>
 }

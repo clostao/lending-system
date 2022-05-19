@@ -44,6 +44,7 @@
     "@mui/material": "^5.8.0",
     "@remix-project/remixd": "^0.6.1",
     "global": "^4.4.0",
-    "recoil": "^0.7.3-alpha.2"
+    "recoil": "^0.7.3-alpha.2",
+    "remixd": "^0.2.4"
   }
 }

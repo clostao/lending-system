@@ -2,11 +2,13 @@ import { Button } from "@mui/material"
 import { utils } from "ethers"
 import { useCallback, useEffect, useState } from "react"
 import { useLend } from "../../hooks/useLend"
+import { useWallet } from "../../hooks/useWallet"
 import { Action, dTokenInfo } from "../../types"
 import { ActionModalController } from "../ActionModalController"
 import { LendingPanelColumn, LendingPanelColumnHeader, LendingPanelRow, LendingPanelWrapper } from "./Styles"
 
 export const LendingPanel = () => {
+    const { signer } = useWallet()
     const [action, setAction] = useState<Action>()
     const [selectedDebtToken, setDebtToken] = useState<string>("")
     const { getDebtTokensInfo, dTokens } = useLend();
@@ -42,12 +44,12 @@ export const LendingPanel = () => {
                     <LendingPanelColumn>20 ETH</LendingPanelColumn>
                     <LendingPanelColumn>0 ETH</LendingPanelColumn>
                     <LendingPanelColumn>
-                        <Button color="primary" onClick={() => updateModalAction('mint', address)}>Supply</Button>
-                        <Button color="secondary" onClick={() => updateModalAction('redeem', address)}>Redeem</Button>
+                        <Button disabled={!signer} color="primary" onClick={() => updateModalAction('mint', address)}>Supply</Button>
+                        <Button disabled={!signer} color="secondary" onClick={() => updateModalAction('redeem', address)}>Redeem</Button>
                     </LendingPanelColumn>
                     <LendingPanelColumn>
-                        <Button color="primary" onClick={() => updateModalAction('borrow', address)}>Borrow</Button>
-                        <Button color="secondary" onClick={() => updateModalAction('repay', address)}>Repay</Button>
+                        <Button disabled={!signer} color="primary" onClick={() => updateModalAction('borrow', address)}>Borrow</Button>
+                        <Button disabled={!signer} color="secondary" onClick={() => updateModalAction('repay', address)}>Repay</Button>
                     </LendingPanelColumn>
                 </LendingPanelRow>
             }

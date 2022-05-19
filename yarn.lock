@@ -899,12 +899,22 @@
     semver "^6.3.0"
     ws "^7.3.0"
 
+"@remixproject/plugin-api@0.3.0-beta.5":
+  version "0.3.0-beta.5"
+  resolved "https://registry.yarnpkg.com/@remixproject/plugin-api/-/plugin-api-0.3.0-beta.5.tgz#5f294f86750c6520382dacec728a62eef6ce6691"
+  integrity sha512-C1fuISsne3sfA61k1rx6qU9ZgubyP8SdNKinzeYvXg4XAm1DwoHQlzjq/WYmjOFx1NZhyMGK8ySBp0VcjAMc/Q==
+
 "@remixproject/plugin-api@0.3.28", "@remixproject/plugin-api@^0.3.11":
   version "0.3.28"
   resolved "https://registry.yarnpkg.com/@remixproject/plugin-api/-/plugin-api-0.3.28.tgz#660f068681bc1780284768e4ce1b4f70ea4ba859"
   integrity sha512-tOzVFR504037weEkNHQGZsk+Ebxcu/xnBsVCkJaQaBMb+H/i6YevKQmoR1aGcH+JfQxc8eS8LGC65MaV8zmcWg==
   dependencies:
     "@remixproject/plugin-utils" "0.3.28"
+
+"@remixproject/plugin-utils@0.3.0-beta.5":
+  version "0.3.0-beta.5"
+  resolved "https://registry.yarnpkg.com/@remixproject/plugin-utils/-/plugin-utils-0.3.0-beta.5.tgz#c6c4699393b6760e2ad2ff56b0c5fc13b43cea21"
+  integrity sha512-+gnfuSUimCxUTRxfTGu+mwI5U6EPUx2A2ANObaZzX8f17nhSW5NWw2vWKauZPSv2PWQoIukYzrmG/kogEe3Cyw==
 
 "@remixproject/plugin-utils@0.3.28", "@remixproject/plugin-utils@^0.3.11":
   version "0.3.28"
@@ -913,7 +923,7 @@
   dependencies:
     tslib "2.0.1"
 
-"@remixproject/plugin-ws@^0.3.11":
+"@remixproject/plugin-ws@^0.3.0-beta.8", "@remixproject/plugin-ws@^0.3.11":
   version "0.3.28"
   resolved "https://registry.yarnpkg.com/@remixproject/plugin-ws/-/plugin-ws-0.3.28.tgz#4f6022b1c8ef6356299c545f6164bce48aac60fe"
   integrity sha512-i3He9t4qvcBQxzshFx66D6drqLlySmV7Cb+NeYtMOYlWxQSJtUakp/Px1Tl3IDFQXDfpXxvDvYhn2w0AWPBOqw==
@@ -921,6 +931,11 @@
     "@remixproject/plugin" "0.3.28"
     "@remixproject/plugin-api" "0.3.28"
     "@remixproject/plugin-utils" "0.3.28"
+
+"@remixproject/plugin@0.3.0-beta.5":
+  version "0.3.0-beta.5"
+  resolved "https://registry.yarnpkg.com/@remixproject/plugin/-/plugin-0.3.0-beta.5.tgz#9374582b3868dee589bc7e4829239ceb9bd9e9ba"
+  integrity sha512-mQgXUhGNc+tQGIIFw7OaBaH7sZTBvDk8Gf4fS1NXhO5ilvykw9TXv5LXWoWkJCWQlKGuUTWd+U1XNpm5dPD3ag==
 
 "@remixproject/plugin@0.3.28", "@remixproject/plugin@^0.3.11":
   version "0.3.28"
@@ -1920,6 +1935,13 @@ axios@>=0.21.1:
   dependencies:
     follow-redirects "^1.14.9"
     form-data "^4.0.0"
+
+axios@^0.20.0:
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.20.0.tgz#057ba30f04884694993a8cd07fa394cff11c50bd"
+  integrity sha512-ANA4rr2BDcmmAQLOKft2fufrtuvlqR+cXNNinUmvfeSNCOF98PZL+7M/v1zIdGo7OLjEA9J2gXJL+j4zGsl0bA==
+  dependencies:
+    follow-redirects "^1.10.0"
 
 babel-code-frame@^6.26.0:
   version "6.26.0"
@@ -5011,15 +5033,15 @@ flow-stoplight@^1.0.0:
   resolved "https://registry.yarnpkg.com/flow-stoplight/-/flow-stoplight-1.0.0.tgz#4a292c5bcff8b39fa6cc0cb1a853d86f27eeff7b"
   integrity sha1-SiksW8/4s5+mzAyxqFPYbyfu/3s=
 
+follow-redirects@^1.10.0, follow-redirects@^1.14.9:
+  version "1.15.0"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.0.tgz#06441868281c86d0dda4ad8bdaead2d02dca89d4"
+  integrity sha512-aExlJShTV4qOUOL7yF1U5tvLCB0xQuudbf6toyYA0E/acBNw71mvjFTnLaRp50aQaYocMR0a/RMMBIHeZnGyjQ==
+
 follow-redirects@^1.12.1:
   version "1.14.9"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.9.tgz#dd4ea157de7bfaf9ea9b3fbd85aa16951f78d8d7"
   integrity sha512-MQDfihBQYMcyy5dhRDJUHcw7lb2Pv/TuE6xP1vyraLukNDHKbDxDNaOE3NbCAdKQApno+GPRyo1YAp89yCjK4w==
-
-follow-redirects@^1.14.9:
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.0.tgz#06441868281c86d0dda4ad8bdaead2d02dca89d4"
-  integrity sha512-aExlJShTV4qOUOL7yF1U5tvLCB0xQuudbf6toyYA0E/acBNw71mvjFTnLaRp50aQaYocMR0a/RMMBIHeZnGyjQ==
 
 for-each@^0.3.3, for-each@~0.3.3:
   version "0.3.3"
@@ -8565,6 +8587,22 @@ regjsparser@^0.1.4:
   integrity sha1-fuj4Tcb6eS0/0K4ijSS9lJ6tIFw=
   dependencies:
     jsesc "~0.5.0"
+
+remixd@^0.2.4:
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/remixd/-/remixd-0.2.4.tgz#7ca24f673e69a10ef6e9a84a428c2a6e18fc2764"
+  integrity sha512-nKRoe2xtaUk1htP+i7zZ+7Qy7vV7iT0Kpn6iXuNuNKAJXtJZr5m9HqDvTnh5Xtj2+Ii/xj7mNq+mgGU4D9E5qg==
+  dependencies:
+    "@remixproject/plugin" "0.3.0-beta.5"
+    "@remixproject/plugin-api" "0.3.0-beta.5"
+    "@remixproject/plugin-utils" "0.3.0-beta.5"
+    "@remixproject/plugin-ws" "^0.3.0-beta.8"
+    axios "^0.20.0"
+    chokidar "^2.1.8"
+    commander "^2.20.3"
+    fs-extra "^3.0.1"
+    isbinaryfile "^3.0.2"
+    ws "^7.3.0"
 
 remove-trailing-separator@^1.0.1:
   version "1.1.0"

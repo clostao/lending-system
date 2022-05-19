@@ -54,6 +54,24 @@ contract ProtocolController is IProtocolController, Ownable {
 
     // Helpers
 
+    function calculateAmountOfBorrow(
+        address account,
+        address debtToken,
+        Math.Factor memory targetFactor
+    ) public view returns (uint256) {
+        (
+            uint256 totalCollateralizedAmount,
+            uint256 totalBorrowedBalance
+        ) = getBalances(account, IDebtToken(debtToken), 0, 0);
+        if (
+            Math.applyFactor(10**10, targetFactor) <
+            (totalBorrowedBalance * (10**10)) / totalCollateralizedAmount
+        ) return 0;
+        return
+            Math.applyFactor(totalCollateralizedAmount, targetFactor) -
+            totalBorrowedBalance;
+    }
+
     function calculateAmountOfCollateral(
         address debtToken,
         uint256 amountToBeRepayed,
@@ -117,12 +135,12 @@ contract ProtocolController is IProtocolController, Ownable {
         );
     }
 
-    function getExpectedLiquidity(
+    function getBalances(
         address account,
         IDebtToken tokenToBeModified,
         uint256 toBeRedeemed,
         uint256 toBeBorrowed
-    ) public view returns (bool, uint256) {
+    ) public view returns (uint256 collateral, uint256 borrows) {
         console.log("Entry");
         ProtocolControllerStructs.AccountLiquidity memory vars;
         for (uint256 i = 0; i < marketAddresses.length; i++) {
@@ -189,18 +207,23 @@ contract ProtocolController is IProtocolController, Ownable {
             console.log("Out: %d", i);
         }
 
-        console.log("Total collateral: %d", vars.totalCollateralizedAmount);
-        console.log("Total borrowed: %d", vars.totalBorrowedBalance);
-        if (vars.totalBorrowedBalance <= vars.totalCollateralizedAmount) {
-            return (
-                true,
-                vars.totalCollateralizedAmount - vars.totalBorrowedBalance
-            );
+        return (vars.totalCollateralizedAmount, vars.totalBorrowedBalance);
+    }
+
+    function getExpectedLiquidity(
+        address account,
+        IDebtToken tokenToBeModified,
+        uint256 toBeRedeemed,
+        uint256 toBeBorrowed
+    ) public view returns (bool, uint256) {
+        (
+            uint256 totalCollateralizedAmount,
+            uint256 totalBorrowedBalance
+        ) = getBalances(account, tokenToBeModified, toBeRedeemed, toBeBorrowed);
+        if (totalBorrowedBalance <= totalCollateralizedAmount) {
+            return (true, totalCollateralizedAmount - totalBorrowedBalance);
         } else {
-            return (
-                false,
-                vars.totalBorrowedBalance - vars.totalCollateralizedAmount
-            );
+            return (false, totalBorrowedBalance - totalCollateralizedAmount);
         }
     }
 
@@ -336,7 +359,6 @@ contract ProtocolController is IProtocolController, Ownable {
             0,
             0
         );
-        return Errors.NO_ERROR;
         if (isNowSolvent) {
             return Errors.USER_IS_SOLVENT;
         }
