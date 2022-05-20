@@ -26,6 +26,8 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
     Math.Factor public exchangeRate;
     IInterestRateModel public interestRateModel;
 
+    uint256 public totalBorrowed = 0;
+
     mapping(address => AccountSnapshot) public accountSnapshot;
 
     constructor(
@@ -133,8 +135,10 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         // Snapshot account
         accountSnapshot[msg.sender].borrowedTokens += amount;
         accountSnapshot[msg.sender].entryExchangeRate = exchangeRate;
-
         accountSnapshot[msg.sender].hasDebt = true;
+
+        // Update totalBorrows
+        totalBorrowed += amount;
 
         // Contract call is secure since the underlying asset is controlled by contract owner
         underlyingAsset.transfer(msg.sender, amount);
@@ -166,6 +170,10 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
 
         accountSnapshot[msg.sender].borrowedTokens = priorBorrowed - amount;
         accountSnapshot[msg.sender].entryExchangeRate = exchangeRate;
+
+        console.log("borrows: %d", totalBorrowed);
+        console.log("amount: %d", amount);
+        totalBorrowed -= amount;
 
         underlyingAsset.transferFrom(msg.sender, address(this), amount);
 
@@ -307,6 +315,9 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         accountSnapshot[borrower].borrowedTokens =
             normalizedDebt -
             underlyingTokens;
+
+        totalBorrowed -= underlyingTokens;
+
         console.log("New debt: %s", accountSnapshot[borrower].borrowedTokens);
         accountSnapshot[borrower].entryExchangeRate = exchangeRate;
     }
@@ -362,9 +373,7 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             exchangeRate
         );
 
-        uint256 notBorrowedAmount = underlyingAsset.balanceOf(address(this));
-
-        uint256 borrowedAmount = actualTotalSupplied - notBorrowedAmount;
+        uint256 borrowedAmount = totalBorrowed;
 
         console.log("-----");
         console.log("----- Borrowed");
@@ -380,9 +389,21 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
         Math.Factor memory accumulatedInterestByBlock = interestRateModel
             .calculateBorrowerInterestRate(actualTotalSupplied, borrowedAmount);
 
+        console.log(
+            "accByBlock: %d / %d",
+            accumulatedInterestByBlock.numerator,
+            accumulatedInterestByBlock.denominator
+        );
+
         Math.Factor memory accumulatedInterest = Math.Factor(
             accumulatedInterestByBlock.numerator * blocksDiff,
             accumulatedInterestByBlock.denominator
+        );
+
+        console.log(
+            "acc: %d / %d",
+            accumulatedInterest.numerator,
+            accumulatedInterest.denominator
         );
 
         uint256 totalInterest = Math.applyFactor(
@@ -390,13 +411,16 @@ contract DebtToken is IDebtToken, ERC20, Ownable {
             accumulatedInterest
         );
 
+        console.log("den: %d", exchangeRate.denominator);
+        console.log("interest: %d", totalInterest);
+        console.log("borrows: %d", borrowedAmount);
+
         exchangeRate.denominator = Math.applyFactor(
             exchangeRate.denominator,
-            Math.Factor(
-                borrowedAmount + totalInterest,
-                borrowedAmount
-            )
+            Math.Factor(borrowedAmount + totalInterest, borrowedAmount)
         );
+
+        totalBorrowed = borrowedAmount + totalInterest;
 
         return Errors.NO_ERROR;
     }
